@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Image</title>
+</head>
+<body>
+    <h1>Add Image to Gallery</h1>
+    <form method="post" enctype="multipart/form-data">
+        <label>Image File: <input type="file" name="file"></label><br>
+        <label>Title: <input type="text" name="title"></label><br>
+        <label>Description: <textarea name="description"></textarea></label><br>
+        <label>Camera Type: <input type="text" name="camera_type"></label><br>
+        <label>Lens: <input type="text" name="lens"></label><br>
+        <label>Settings: <input type="text" name="settings"></label><br>
+        <button type="submit">Add Image</button>
+    </form>
+    <a href="/gallery/{{ gallery_id }}">Back to Gallery</a>
+</body>
+</html>

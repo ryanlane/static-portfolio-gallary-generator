@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Galleries</title>
+</head>
+<body>
+    <h1>Galleries</h1>
+    <a href="/create-gallery">Create New Gallery</a>
+    <ul>
+    {% for gallery in galleries %}
+        <li><a href="/gallery/{{ gallery.id }}">{{ gallery.title or 'Untitled Gallery' }}</a> - {{ gallery.description }}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
