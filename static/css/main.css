@@ -3,6 +3,7 @@
 @import '_navigation.css';
 @import '_gallery.css';
 @import '_image-card.css';
+@import '_dashboard.css';
 
 /* Import component styles */
 @import '_gallery_list.css';

@@ -1,18 +1,182 @@
 {% extends "base.html" %}
-{% block title %}Galleries{% endblock %}
+{% block title %}Dashboard - Gallery Manager{% endblock %}
 {% block content %}
-    <a href="/create-gallery">Create New Gallery</a>
-    <div class="gallery-list">
-    {% for gallery in galleries %}
-        <div class="gallery-list-item">
-            <a href="/gallery/{{ gallery.id }}">
-                {% if featured_images[gallery.id] is defined %}
-                    <img src="/static/gallery_{{ gallery.id }}/{{ featured_images[gallery.id].filename }}" width="180" style="display:block;margin-bottom:0.5rem;">
-                {% endif %}
-                <strong>{{ gallery.title or 'Untitled Gallery' }}</strong>
-            </a>
-            <div>{{ gallery.description }}</div>
+<div class="container">
+    <!-- Hero Section -->
+    <div class="dashboard-hero">
+        <h1>📸 Gallery Dashboard</h1>
+        <p>Manage your photo galleries and generate beautiful static sites</p>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_galleries }}</div>
+                <div class="stat-label">Galleries</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_images }}</div>
+                <div class="stat-label">Total Images</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ enabled_images }}</div>
+                <div class="stat-label">Published</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ generated_sites|length }}</div>
+                <div class="stat-label">Generated Sites</div>
+            </div>
         </div>
-    {% endfor %}
     </div>
+
+    <!-- Quick Actions -->
+    <div class="dashboard-section">
+        <h2>🚀 Quick Actions</h2>
+        <div class="action-grid">
+            <a href="/create-gallery" class="action-card primary">
+                <div class="action-icon">➕</div>
+                <div class="action-content">
+                    <h3>Create Gallery</h3>
+                    <p>Start a new photo gallery</p>
+                </div>
+            </a>
+            
+            <a href="/galleries" class="action-card">
+                <div class="action-icon">🖼️</div>
+                <div class="action-content">
+                    <h3>Manage Galleries</h3>
+                    <p>Edit existing galleries</p>
+                </div>
+            </a>
+            
+            <a href="/generate" class="action-card">
+                <div class="action-icon">📦</div>
+                <div class="action-content">
+                    <h3>Generate Site</h3>
+                    <p>Create static website</p>
+                </div>
+            </a>
+            
+            {% if recent_galleries %}
+            <a href="/gallery/{{ recent_galleries[0].id }}/add-image" class="action-card">
+                <div class="action-icon">📷</div>
+                <div class="action-content">
+                    <h3>Add Images</h3>
+                    <p>Upload to latest gallery</p>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Generated Sites -->
+    {% if generated_sites %}
+    <div class="dashboard-section">
+        <h2>🌐 Generated Sites</h2>
+        <div class="sites-grid">
+            {% for site in generated_sites %}
+            <div class="site-card">
+                <div class="site-info">
+                    <h3>{{ site.name }}</h3>
+                    <div class="site-meta">
+                        <span class="site-date">{{ site.created.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                        <span class="site-size">{{ "%.1f"|format(site.size / 1024 / 1024) }} MB</span>
+                    </div>
+                </div>
+                <div class="site-actions">
+                    <a href="/download/{{ site.filename }}" class="btn btn-primary btn-small">
+                        <span class="icon">⬇️</span>
+                        Download
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="section-footer">
+            <a href="/generate" class="btn btn-secondary">
+                <span class="icon">📦</span>
+                Generate New Site
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Activity -->
+    <div class="dashboard-grid">
+        <!-- Recent Galleries -->
+        {% if recent_galleries %}
+        <div class="dashboard-section">
+            <h2>📁 Recent Galleries</h2>
+            <div class="recent-list">
+                {% for gallery in recent_galleries %}
+                <div class="recent-item">
+                    <div class="recent-info">
+                        <h3><a href="/gallery/{{ gallery.id }}">{{ gallery.title or "Gallery " + gallery.id|string }}</a></h3>
+                        <p>{{ gallery.image_count }} images</p>
+                    </div>
+                    <div class="recent-actions">
+                        <a href="/gallery/{{ gallery.id }}" class="btn btn-secondary btn-small">View</a>
+                        <a href="/gallery/{{ gallery.id }}/add-image" class="btn btn-secondary btn-small">Add Images</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="section-footer">
+                <a href="/galleries" class="btn btn-secondary">View All Galleries</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Images -->
+        {% if recent_images %}
+        <div class="dashboard-section">
+            <h2>🖼️ Recent Uploads</h2>
+            <div class="recent-images">
+                {% for image in recent_images %}
+                <div class="recent-image">
+                    <img src="/static/thumbs/{{ image.filename }}" alt="{{ image.title or 'Recent upload' }}">
+                    <div class="image-overlay">
+                        <div class="image-title">{{ image.gallery_title }}</div>
+                        {% if image.title %}
+                        <div class="image-subtitle">{{ image.title }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Getting Started -->
+    {% if total_galleries == 0 %}
+    <div class="dashboard-section getting-started">
+        <h2>🎯 Getting Started</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Create Your First Gallery</h3>
+                    <p>Start by creating a gallery to organize your photos</p>
+                    <a href="/create-gallery" class="btn btn-primary">Create Gallery</a>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Upload Images</h3>
+                    <p>Add photos to your gallery with drag & drop</p>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Generate Static Site</h3>
+                    <p>Create a beautiful website from your galleries</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

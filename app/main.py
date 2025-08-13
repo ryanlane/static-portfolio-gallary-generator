@@ -9,6 +9,8 @@ from PIL import Image
 import exifread
 import json
 import io
+from datetime import datetime
+import zipfile
 import zipfile
 import tempfile
 from datetime import datetime
@@ -69,18 +71,65 @@ def startup():
     conn.close()
 
 @app.get('/', response_class=HTMLResponse)
-def index(request: Request):
+def dashboard(request: Request):
+    """Dashboard homepage with overview and quick actions"""
     conn = get_db()
-    galleries = conn.execute('SELECT * FROM galleries').fetchall()
-    # Get featured images for each gallery
-    featured_images = {}
-    for gallery in galleries:
-        if gallery['featured_image_id']:
-            img = conn.execute('SELECT * FROM images WHERE id=?', (gallery['featured_image_id'],)).fetchone()
-            if img:
-                featured_images[gallery['id']] = img
+    c = conn.cursor()
+    
+    # Get overview stats
+    total_galleries = c.execute('SELECT COUNT(*) as count FROM galleries').fetchone()['count']
+    total_images = c.execute('SELECT COUNT(*) as count FROM images').fetchone()['count']
+    enabled_images = c.execute('SELECT COUNT(*) as count FROM images WHERE enabled=1').fetchone()['count']
+    
+    # Get recent galleries (last 5)
+    recent_galleries = c.execute('''
+        SELECT g.*, COUNT(i.id) as image_count 
+        FROM galleries g 
+        LEFT JOIN images i ON g.id = i.gallery_id 
+        GROUP BY g.id 
+        ORDER BY g.id DESC 
+        LIMIT 5
+    ''').fetchall()
+    
+    # Get recent images (last 8)
+    recent_images = c.execute('''
+        SELECT i.*, g.title as gallery_title 
+        FROM images i 
+        JOIN galleries g ON i.gallery_id = g.id 
+        ORDER BY i.id DESC 
+        LIMIT 8
+    ''').fetchall()
+    
+    # Get generated sites from filesystem (check for previous generations)
+    generated_sites = []
+    download_dir = 'downloads'
+    if os.path.exists(download_dir):
+        for filename in os.listdir(download_dir):
+            if filename.endswith('.zip'):
+                file_path = os.path.join(download_dir, filename)
+                stat = os.stat(file_path)
+                generated_sites.append({
+                    'filename': filename,
+                    'name': filename.replace('.zip', '').replace('_', ' ').title(),
+                    'created': datetime.fromtimestamp(stat.st_mtime),
+                    'size': stat.st_size
+                })
+    
+    # Sort by creation time, newest first
+    generated_sites.sort(key=lambda x: x['created'], reverse=True)
+    generated_sites = generated_sites[:5]  # Keep only last 5
+    
     conn.close()
-    return templates.TemplateResponse('index.html', {'request': request, 'galleries': galleries, 'featured_images': featured_images})
+    
+    return templates.TemplateResponse('index.html', {
+        'request': request,
+        'total_galleries': total_galleries,
+        'total_images': total_images,
+        'enabled_images': enabled_images,
+        'recent_galleries': recent_galleries,
+        'recent_images': recent_images,
+        'generated_sites': generated_sites
+    })
 
 @app.get('/gallery/{gallery_id}', response_class=HTMLResponse)
 def view_gallery(request: Request, gallery_id: int):
