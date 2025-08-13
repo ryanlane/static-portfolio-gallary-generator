@@ -8,7 +8,7 @@
 /* Welcome Hero Section */
 .welcome-hero {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 0 0 40px 40px;
+    border-radius: 40px;
     color: white;
     padding: 4rem 2rem;
     text-align: center;
