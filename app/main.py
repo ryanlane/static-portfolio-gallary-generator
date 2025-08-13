@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import sqlite3
@@ -9,6 +9,9 @@ from PIL import Image
 import exifread
 import json
 import io
+import zipfile
+import tempfile
+from datetime import datetime
 from typing import List
 
 app = FastAPI()
@@ -98,6 +101,111 @@ def create_gallery(title: str = Form(...), description: str = Form(None)):
     conn.commit()
     conn.close()
     return RedirectResponse('/', status_code=303)
+
+# Gallery CRUD operations
+@app.get('/galleries', response_class=HTMLResponse)
+def list_galleries(request: Request):
+    """List all galleries with management options"""
+    conn = get_db()
+    c = conn.cursor()
+    galleries = c.execute('SELECT * FROM galleries ORDER BY id DESC').fetchall()
+    
+    # Get image counts and featured images for each gallery
+    galleries_with_info = []
+    for gallery in galleries:
+        image_count = c.execute('SELECT COUNT(*) as count FROM images WHERE gallery_id=?', (gallery['id'],)).fetchone()['count']
+        enabled_count = c.execute('SELECT COUNT(*) as count FROM images WHERE gallery_id=? AND enabled=1', (gallery['id'],)).fetchone()['count']
+        
+        featured_image = None
+        if gallery['featured_image_id']:
+            featured_image = c.execute('SELECT filename FROM images WHERE id=?', (gallery['featured_image_id'],)).fetchone()
+        
+        galleries_with_info.append({
+            'id': gallery['id'],
+            'title': gallery['title'],
+            'description': gallery['description'],
+            'featured_image_id': gallery['featured_image_id'],
+            'image_count': image_count,
+            'enabled_count': enabled_count,
+            'featured_image': featured_image
+        })
+    
+    conn.close()
+    return templates.TemplateResponse('galleries_list.html', {
+        'request': request, 
+        'galleries': galleries_with_info
+    })
+
+@app.get('/gallery/{gallery_id}/edit', response_class=HTMLResponse)
+def edit_gallery_form(request: Request, gallery_id: int):
+    """Show gallery edit form"""
+    conn = get_db()
+    gallery = conn.execute('SELECT * FROM galleries WHERE id=?', (gallery_id,)).fetchone()
+    conn.close()
+    
+    if not gallery:
+        return RedirectResponse('/galleries?error=Gallery+not+found', status_code=303)
+    
+    return templates.TemplateResponse('edit_gallery.html', {
+        'request': request, 
+        'gallery': gallery
+    })
+
+@app.post('/gallery/{gallery_id}/update')
+def update_gallery(gallery_id: int, title: str = Form(...), description: str = Form("")):
+    """Update gallery details"""
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Check if gallery exists
+    gallery = c.execute('SELECT * FROM galleries WHERE id=?', (gallery_id,)).fetchone()
+    if not gallery:
+        conn.close()
+        return RedirectResponse('/galleries?error=Gallery+not+found', status_code=303)
+    
+    # Update gallery
+    c.execute('UPDATE galleries SET title=?, description=? WHERE id=?', (title, description, gallery_id))
+    conn.commit()
+    conn.close()
+    
+    return RedirectResponse(f'/gallery/{gallery_id}?message=Gallery+updated+successfully', status_code=303)
+
+@app.post('/gallery/{gallery_id}/delete')
+def delete_gallery(gallery_id: int):
+    """Delete gallery and all its images"""
+    conn = get_db()
+    c = conn.cursor()
+    
+    # Check if gallery exists
+    gallery = c.execute('SELECT * FROM galleries WHERE id=?', (gallery_id,)).fetchone()
+    if not gallery:
+        conn.close()
+        return RedirectResponse('/galleries?error=Gallery+not+found', status_code=303)
+    
+    # Get all images in this gallery for file cleanup
+    images = c.execute('SELECT filename FROM images WHERE gallery_id=?', (gallery_id,)).fetchall()
+    
+    # Delete images from database
+    c.execute('DELETE FROM images WHERE gallery_id=?', (gallery_id,))
+    
+    # Delete gallery from database
+    c.execute('DELETE FROM galleries WHERE id=?', (gallery_id,))
+    
+    conn.commit()
+    conn.close()
+    
+    # Clean up image files
+    gallery_dir = f'static/gallery_{gallery_id}'
+    if os.path.exists(gallery_dir):
+        shutil.rmtree(gallery_dir)
+    
+    # Clean up thumbnail files
+    for image in images:
+        thumb_path = f'static/thumbs/{image["filename"]}'
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+    
+    return RedirectResponse('/galleries?message=Gallery+deleted+successfully', status_code=303)
 
 @app.get('/gallery/{gallery_id}/add-image', response_class=HTMLResponse)
 def add_image_form(request: Request, gallery_id: int):
@@ -390,3 +498,202 @@ def reset_database(request: Request):
     # Recreate DB tables
     startup()
     return RedirectResponse('/settings?message=Database+reset+successfully', status_code=303)
+
+# Static Site Generation Routes
+@app.get('/generate', response_class=HTMLResponse)
+def generate_page(request: Request):
+    """Show static site generation options"""
+    conn = get_db()
+    c = conn.cursor()
+    galleries = c.execute('SELECT * FROM galleries ORDER BY id').fetchall()
+    
+    # Get featured images for each gallery (similar to galleries list)
+    galleries_with_info = []
+    for gallery in galleries:
+        featured_image = None
+        if gallery['featured_image_id']:
+            featured_image = c.execute('SELECT filename FROM images WHERE id=?', (gallery['featured_image_id'],)).fetchone()
+        
+        galleries_with_info.append({
+            'id': gallery['id'],
+            'title': gallery['title'],
+            'description': gallery['description'],
+            'featured_image_id': gallery['featured_image_id'],
+            'featured_image': featured_image
+        })
+    
+    conn.close()
+    
+    # Get available themes
+    themes = []
+    static_templates_dir = 'static_templates'
+    if os.path.exists(static_templates_dir):
+        for theme_name in os.listdir(static_templates_dir):
+            theme_path = os.path.join(static_templates_dir, theme_name)
+            if os.path.isdir(theme_path) and os.path.exists(os.path.join(theme_path, 'index.html')):
+                themes.append({
+                    'name': theme_name,
+                    'title': theme_name.replace('_', ' ').title()
+                })
+    
+    return templates.TemplateResponse('generate.html', {
+        'request': request,
+        'galleries': galleries_with_info,
+        'themes': themes
+    })
+
+@app.post('/generate/static')
+def generate_static_site(
+    site_title: str = Form("My Photo Gallery"),
+    site_description: str = Form(""),
+    theme: str = Form("minimal"),
+    gallery_ids: List[str] = Form([])
+):
+    """Generate static site with selected galleries and theme"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Get selected galleries with their images
+        galleries = []
+        for gallery_id in gallery_ids:
+            gallery = c.execute('SELECT * FROM galleries WHERE id=?', (gallery_id,)).fetchone()
+            if gallery:
+                images = c.execute('''
+                    SELECT * FROM images 
+                    WHERE gallery_id=? AND enabled=1 
+                    ORDER BY sort_order ASC
+                ''', (gallery_id,)).fetchall()
+                
+                galleries.append({
+                    'id': gallery['id'],
+                    'title': gallery['title'],
+                    'description': gallery['description'],
+                    'images': [dict(img) for img in images]
+                })
+        
+        conn.close()
+        
+        if not galleries:
+            return RedirectResponse('/generate?error=No+galleries+selected', status_code=303)
+        
+        # Create temporary directory for static site
+        temp_dir = tempfile.mkdtemp(prefix='static_site_')
+        
+        try:
+            # Create directory structure
+            images_dir = os.path.join(temp_dir, 'images')
+            os.makedirs(images_dir, exist_ok=True)
+            
+            # Copy selected images
+            for gallery in galleries:
+                for image in gallery['images']:
+                    src_path = os.path.join('static', f'gallery_{gallery["id"]}', image['filename'])
+                    if os.path.exists(src_path):
+                        shutil.copy2(src_path, os.path.join(images_dir, image['filename']))
+            
+            # Load and render template
+            theme_template_path = os.path.join('static_templates', theme, 'index.html')
+            if not os.path.exists(theme_template_path):
+                theme_template_path = os.path.join('static_templates', 'minimal', 'index.html')
+            
+            with open(theme_template_path, 'r', encoding='utf-8') as f:
+                template_content = f.read()
+            
+            # Simple template rendering (we'll use Jinja2 properly)
+            from jinja2 import Environment, FileSystemLoader
+            
+            env = Environment(loader=FileSystemLoader('static_templates'))
+            env.filters['from_json'] = from_json
+            
+            template = env.get_template(f'{theme}/index.html')
+            
+            rendered_html = template.render(
+                site_title=site_title,
+                site_description=site_description,
+                galleries=galleries
+            )
+            
+            # Write HTML file
+            with open(os.path.join(temp_dir, 'index.html'), 'w', encoding='utf-8') as f:
+                f.write(rendered_html)
+            
+            # Create ZIP file
+            zip_path = os.path.join('static', 'generated_sites', f'site_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip')
+            os.makedirs(os.path.dirname(zip_path), exist_ok=True)
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(temp_dir):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_path, temp_dir)
+                        zipf.write(file_path, arcname)
+            
+            # Return download link
+            return RedirectResponse(f'/generate?success=Site+generated+successfully&download={os.path.basename(zip_path)}', status_code=303)
+            
+        finally:
+            # Cleanup temp directory
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            
+    except Exception as e:
+        return RedirectResponse(f'/generate?error=Generation+failed:+{str(e)}', status_code=303)
+
+@app.get('/download/{filename}')
+def download_generated_site(filename: str):
+    """Download generated static site"""
+    file_path = os.path.join('static', 'generated_sites', filename)
+    if os.path.exists(file_path) and filename.endswith('.zip'):
+        return FileResponse(
+            file_path,
+            media_type='application/zip',
+            filename=filename
+        )
+    return RedirectResponse('/generate?error=File+not+found', status_code=303)
+
+@app.get('/preview/{theme}')
+def preview_theme(theme: str, request: Request):
+    """Preview a theme with sample data"""
+    # Sample gallery data for preview
+    sample_galleries = [{
+        'id': 1,
+        'title': 'Sample Gallery',
+        'description': 'This is a sample gallery to preview the theme.',
+        'images': [
+            {
+                'filename': 'sample1.jpg',
+                'title': 'Sample Image 1',
+                'description': 'A beautiful landscape photograph.',
+                'camera_type': 'Canon EOS R5',
+                'lens': 'RF 24-70mm f/2.8L',
+                'settings': 'f/8, 1/125s, ISO 100',
+                'enabled': 1
+            },
+            {
+                'filename': 'sample2.jpg',
+                'title': 'Sample Image 2',
+                'description': 'Portrait with shallow depth of field.',
+                'camera_type': 'Sony A7R IV',
+                'lens': '85mm f/1.4 GM',
+                'settings': 'f/1.4, 1/200s, ISO 400',
+                'enabled': 1
+            }
+        ]
+    }]
+    
+    try:
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader('static_templates'))
+        env.filters['from_json'] = from_json
+        
+        template = env.get_template(f'{theme}/index.html')
+        rendered_html = template.render(
+            site_title="Theme Preview",
+            site_description="This is a preview of the selected theme with sample content.",
+            galleries=sample_galleries
+        )
+        
+        return HTMLResponse(content=rendered_html)
+        
+    except Exception as e:
+        return HTMLResponse(f"<h1>Preview Error</h1><p>Could not load theme '{theme}': {str(e)}</p>")

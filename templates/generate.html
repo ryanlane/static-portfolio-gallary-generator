@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Static Site{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Generate Static Site</h1>
+        <p>Create a deployable static website from your galleries</p>
+    </div>
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error">
+        {{ request.query_params.get('error') }}
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success">
+        {{ request.query_params.get('success') }}
+        {% if request.query_params.get('download') %}
+        <a href="/download/{{ request.query_params.get('download') }}" class="btn btn-primary">Download Site</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/generate/static" class="generate-form">
+        <div class="form-section">
+            <h2>Site Settings</h2>
+            <div class="form-group">
+                <label for="site_title">Site Title</label>
+                <input type="text" id="site_title" name="site_title" value="My Photo Gallery" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="site_description">Site Description</label>
+                <textarea id="site_description" name="site_description" rows="3" placeholder="Optional description for your photo gallery"></textarea>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Select Theme</h2>
+            <div class="theme-grid">
+                {% for theme in themes %}
+                <div class="theme-option">
+                    <input type="radio" id="theme_{{ theme.name }}" name="theme" value="{{ theme.name }}" {% if loop.first %}checked{% endif %}>
+                    <label for="theme_{{ theme.name }}" class="theme-card">
+                        <div class="theme-preview">
+                            <iframe src="/preview/{{ theme.name }}" class="theme-iframe"></iframe>
+                        </div>
+                        <div class="theme-info">
+                            <h3>{{ theme.title }}</h3>
+                            <p>{{ theme.name.replace('_', ' ').title() }} layout theme</p>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h2>Select Galleries</h2>
+            {% if galleries %}
+            <div class="gallery-selection">
+                {% for gallery in galleries %}
+                <div class="gallery-option">
+                    <input type="checkbox" id="gallery_{{ gallery.id }}" name="gallery_ids" value="{{ gallery.id }}" checked>
+                    <label for="gallery_{{ gallery.id }}" class="gallery-card">
+                        <div class="gallery-info">
+                            <h3>{{ gallery.title or "Gallery " + gallery.id|string }}</h3>
+                            {% if gallery.description %}
+                            <p>{{ gallery.description }}</p>
+                            {% endif %}
+                        </div>
+                        {% if gallery.featured_image %}
+                        <div class="gallery-thumbnail">
+                            <img src="/static/thumbs/{{ gallery.featured_image.filename }}" alt="Gallery thumbnail">
+                        </div>
+                        {% endif %}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-galleries">
+                <p>No galleries found. <a href="/galleries">Create a gallery</a> first.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if galleries %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">
+                <span class="icon">📦</span>
+                Generate Static Site
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+
+{% endblock %}

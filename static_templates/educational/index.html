@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- 
+        TEMPLATE VARIABLES AVAILABLE:
+        - site_title: The title of the entire site
+        - site_description: Optional description of the site
+        - galleries: List of gallery objects, each containing:
+          * title: Gallery title
+          * description: Gallery description (optional)
+          * images: List of image objects in this gallery
+        - Each image object contains:
+          * filename: The image filename (without path)
+          * title: Image title (optional)
+          * description: Image description (optional)
+          * camera_type: Camera used (optional)
+          * lens: Lens information (optional)
+          * settings: Camera settings (optional)
+    -->
+    
+    <title>{{ site_title or "My Photo Gallery" }}</title>
+    
+    <!-- Basic CSS - You can customize this section completely -->
+    <style>
+        /* 
+            BASIC RESET AND LAYOUT 
+            This removes browser default styling and sets up a clean foundation
+        */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        
+        /*
+            CONTAINER AND LAYOUT
+            Basic responsive container to center content
+        */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /*
+            HEADER STYLES
+            Style the main site header
+        */
+        .site-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .site-title {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .site-description {
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+        
+        /*
+            GALLERY STYLES
+            Each gallery is displayed as a section
+        */
+        .gallery {
+            margin-bottom: 60px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .gallery-header {
+            padding: 30px;
+            background: #34495e;
+            color: white;
+        }
+        
+        .gallery-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .gallery-description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /*
+            IMAGE GRID STYLES
+            Simple responsive grid for images
+        */
+        .image-grid {
+            display: grid;
+            /* 
+                RESPONSIVE GRID:
+                - On large screens: 4 columns
+                - Automatically adjusts to fewer columns on smaller screens
+                - Each column is at least 250px wide
+            */
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0; /* No gap for a clean grid look */
+        }
+        
+        /*
+            INDIVIDUAL IMAGE STYLES
+        */
+        .image-item {
+            position: relative;
+            aspect-ratio: 1; /* Makes each grid item square */
+            overflow: hidden;
+            background: #ecf0f1;
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Crops image to fit square while maintaining aspect ratio */
+            transition: transform 0.3s ease; /* Smooth zoom effect on hover */
+        }
+        
+        /*
+            HOVER EFFECTS
+            Simple zoom effect when hovering over images
+        */
+        .image-item:hover img {
+            transform: scale(1.05);
+        }
+        
+        /*
+            IMAGE OVERLAY
+            Shows image information on hover
+        */
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+            color: white;
+            padding: 20px;
+            transform: translateY(100%); /* Hidden by default */
+            transition: transform 0.3s ease;
+        }
+        
+        .image-item:hover .image-overlay {
+            transform: translateY(0); /* Slide up on hover */
+        }
+        
+        .image-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .image-meta {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        /*
+            EMPTY STATE
+            What to show when a gallery has no images
+        */
+        .empty-gallery {
+            padding: 60px;
+            text-align: center;
+            color: #7f8c8d;
+        }
+        
+        /*
+            RESPONSIVE DESIGN
+            Adjustments for mobile devices
+        */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .site-title {
+                font-size: 2rem;
+            }
+            
+            .gallery-title {
+                font-size: 1.5rem;
+            }
+            
+            .image-grid {
+                /* On mobile, show 2 columns minimum */
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .gallery-header {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 
+            SITE HEADER
+            Display the main site title and description
+        -->
+        <header class="site-header">
+            <h1 class="site-title">{{ site_title or "My Photo Gallery" }}</h1>
+            <!-- Only show description if it exists -->
+            {% if site_description %}
+            <p class="site-description">{{ site_description }}</p>
+            {% endif %}
+        </header>
+        
+        <!-- 
+            MAIN CONTENT
+            Loop through all galleries and display them
+        -->
+        <main>
+            <!-- 
+                JINJA2 TEMPLATE SYNTAX:
+                {% for gallery in galleries %} - Start a loop
+                {% endfor %} - End the loop
+                {{ variable }} - Output a variable
+                {% if condition %} - Conditional statement
+                {% endif %} - End conditional
+            -->
+            {% for gallery in galleries %}
+            <section class="gallery">
+                <!-- Gallery Header with title and description -->
+                <header class="gallery-header">
+                    <h2 class="gallery-title">{{ gallery.title or "Untitled Gallery" }}</h2>
+                    {% if gallery.description %}
+                    <p class="gallery-description">{{ gallery.description }}</p>
+                    {% endif %}
+                </header>
+                
+                <!-- Check if gallery has images -->
+                {% if gallery.images %}
+                <div class="image-grid">
+                    <!-- Loop through each image in this gallery -->
+                    {% for image in gallery.images %}
+                    <div class="image-item">
+                        <!-- 
+                            IMAGE PATH STRUCTURE:
+                            Images are stored in: galleries/{gallery_id}/{filename}
+                            We use the loop.index0 (0-based counter) as gallery_id
+                        -->
+                        <img src="galleries/{{ loop.index0 }}/{{ image.filename }}" 
+                             alt="{{ image.title or 'Photo' }}"
+                             loading="lazy">
+                        
+                        <!-- 
+                            IMAGE OVERLAY
+                            Shows additional information about the image
+                            Only appears if there's a title or metadata to show
+                        -->
+                        {% if image.title or image.camera_type or image.lens or image.settings %}
+                        <div class="image-overlay">
+                            {% if image.title %}
+                            <div class="image-title">{{ image.title }}</div>
+                            {% endif %}
+                            
+                            {% if image.description %}
+                            <div class="image-description">{{ image.description }}</div>
+                            {% endif %}
+                            
+                            <!-- Technical metadata (camera info) -->
+                            {% if image.camera_type or image.lens or image.settings %}
+                            <div class="image-meta">
+                                {% if image.camera_type %}{{ image.camera_type }}{% endif %}
+                                {% if image.lens %} • {{ image.lens }}{% endif %}
+                                {% if image.settings %} • {{ image.settings }}{% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <!-- 
+                    EMPTY STATE
+                    What to show when a gallery has no images
+                -->
+                <div class="empty-gallery">
+                    <p>This gallery is empty.</p>
+                </div>
+                {% endif %}
+            </section>
+            {% endfor %}
+            
+            <!-- 
+                FALLBACK FOR NO GALLERIES
+                What to show if there are no galleries at all
+            -->
+            {% if not galleries %}
+            <div class="empty-gallery">
+                <h2>No Galleries Found</h2>
+                <p>There are no photo galleries to display.</p>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+    
+    <!-- 
+        OPTIONAL JAVASCRIPT
+        You can add JavaScript here for interactive features
+    -->
+    <script>
+        /*
+            EXAMPLE: Simple lightbox functionality
+            This is just an example - you can add any JavaScript you want
+        */
+        
+        // Wait for the page to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find all images
+            const images = document.querySelectorAll('.image-item img');
+            
+            // Add click event to each image
+            images.forEach(function(img) {
+                img.addEventListener('click', function() {
+                    // Simple alert showing image info
+                    // You could replace this with a proper lightbox
+                    alert('Image: ' + this.alt + '\nSource: ' + this.src);
+                });
+            });
+            
+            // Log some information to help with debugging
+            console.log('Template loaded successfully!');
+            console.log('Found ' + images.length + ' images total');
+        });
+    </script>
+</body>
+</html>

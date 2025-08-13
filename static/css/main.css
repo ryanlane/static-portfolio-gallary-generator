@@ -1,8 +1,15 @@
 /* Main CSS file - imports all modular styles */
-@import url('_base.css');
-@import url('_navigation.css');
-@import url('_gallery.css');
-@import url('_image-card.css');
+@import '_base.css';
+@import '_navigation.css';
+@import '_gallery.css';
+@import '_image-card.css';
+
+/* Import component styles */
+@import '_gallery_list.css';
+@import '_add_image.css';
+@import '_gallery_view.css';
+@import '_generate.css';
+@import '_edit_gallery.css';
 
 /* Current image display styles */
 .current {

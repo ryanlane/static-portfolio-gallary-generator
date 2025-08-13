@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Galleries{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="galleries-page-header">
+        <h1>Photo Galleries</h1>
+        <div class="galleries-page-actions">
+            <a href="/create-gallery" class="btn btn-primary">
+                <span class="icon">➕</span>
+                Create New Gallery
+            </a>
+        </div>
+    </div>
+
+    {% if request.query_params.get('message') %}
+    <div class="alert alert-success">
+        {{ request.query_params.get('message') }}
+    </div>
+    {% endif %}
+
+    {% if request.query_params.get('error') %}
+    <div class="alert alert-error">
+        {{ request.query_params.get('error') }}
+    </div>
+    {% endif %}
+
+    {% if galleries %}
+    <div class="galleries-grid">
+        {% for gallery in galleries %}
+        <div class="galleries-card">
+            {% if gallery.featured_image %}
+            <div class="galleries-thumbnail">
+                <img src="/static/thumbs/{{ gallery.featured_image.filename }}" alt="{{ gallery.title or 'Gallery ' + gallery.id|string }}">
+                <div class="galleries-overlay">
+                    <a href="/gallery/{{ gallery.id }}" class="galleries-overlay-btn view-btn" title="View Gallery">
+                        <span class="icon">👁️</span>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="galleries-thumbnail empty">
+                <div class="galleries-empty-state">
+                    <span class="icon">🖼️</span>
+                    <p>No Images</p>
+                </div>
+                <div class="galleries-overlay">
+                    <a href="/gallery/{{ gallery.id }}" class="galleries-overlay-btn view-btn" title="View Gallery">
+                        <span class="icon">👁️</span>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="galleries-info">
+                <h3 class="galleries-title">
+                    <a href="/gallery/{{ gallery.id }}">{{ gallery.title or "Gallery " + gallery.id|string }}</a>
+                </h3>
+                
+                {% if gallery.description %}
+                <p class="galleries-description">{{ gallery.description }}</p>
+                {% endif %}
+
+                <div class="galleries-stats">
+                    <span class="galleries-stat">
+                        <span class="icon">📷</span>
+                        {{ gallery.enabled_count }}/{{ gallery.image_count }} images
+                    </span>
+                    {% if gallery.featured_image %}
+                    <span class="galleries-stat featured">
+                        <span class="icon">⭐</span>
+                        Featured
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="galleries-actions">
+                    <a href="/gallery/{{ gallery.id }}" class="btn btn-secondary btn-small">
+                        <span class="icon">👁️</span>
+                        View
+                    </a>
+                    <a href="/gallery/{{ gallery.id }}/add-image" class="btn btn-secondary btn-small">
+                        <span class="icon">📷</span>
+                        Add Images
+                    </a>
+                    <a href="/gallery/{{ gallery.id }}/edit" class="btn btn-secondary btn-small">
+                        <span class="icon">✏️</span>
+                        Edit
+                    </a>
+                    <button onclick="confirmDelete({{ gallery.id }}, '{{ gallery.title or 'Gallery ' + gallery.id|string }}')" class="btn btn-danger btn-small">
+                        <span class="icon">🗑️</span>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-large">
+        <div class="galleries-empty-icon">📸</div>
+        <h2>No Galleries Yet</h2>
+        <p>Create your first gallery to start organizing your photos.</p>
+        <a href="/create-gallery" class="btn btn-primary btn-large">
+            <span class="icon">➕</span>
+            Create Your First Gallery
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete Gallery</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete "<span id="deleteGalleryName"></span>"?</p>
+            <p class="warning">This will permanently delete the gallery and all its images. This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <form id="deleteForm" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">
+                    <span class="icon">🗑️</span>
+                    Delete Gallery
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(galleryId, galleryName) {
+    document.getElementById('deleteGalleryName').textContent = galleryName;
+    document.getElementById('deleteForm').action = `/gallery/${galleryId}/delete`;
+    document.getElementById('deleteModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
+{% endblock %}

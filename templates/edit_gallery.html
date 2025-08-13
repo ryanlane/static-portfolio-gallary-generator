@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Gallery{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Edit Gallery</h1>
+        <div class="breadcrumb">
+            <a href="/galleries">Galleries</a> 
+            <span>›</span> 
+            <a href="/gallery/{{ gallery.id }}">{{ gallery.title or "Gallery " + gallery.id|string }}</a>
+            <span>›</span>
+            <span>Edit</span>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <form method="post" action="/gallery/{{ gallery.id }}/update" class="gallery-form">
+            <div class="form-group">
+                <label for="title">Gallery Title *</label>
+                <input type="text" id="title" name="title" value="{{ gallery.title or '' }}" required 
+                       placeholder="Enter a descriptive title for your gallery">
+                <div class="field-help">Give your gallery a memorable and descriptive name.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Gallery Description</label>
+                <textarea id="description" name="description" rows="4" 
+                          placeholder="Describe what this gallery is about (optional)">{{ gallery.description or '' }}</textarea>
+                <div class="field-help">Optional description to help visitors understand the theme or purpose of this gallery.</div>
+            </div>
+
+            <div class="form-actions">
+                <a href="/gallery/{{ gallery.id }}" class="btn btn-secondary">
+                    <span class="icon">←</span>
+                    Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="icon">💾</span>
+                    Update Gallery
+                </button>
+            </div>
+        </form>
+
+        <div class="danger-zone">
+            <h3>Danger Zone</h3>
+            <div class="danger-content">
+                <div class="danger-text">
+                    <strong>Delete this gallery</strong>
+                    <p>Once you delete a gallery, there is no going back. This will permanently delete the gallery and all its images.</p>
+                </div>
+                <button onclick="confirmDelete()" class="btn btn-danger">
+                    <span class="icon">🗑️</span>
+                    Delete Gallery
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Delete Gallery</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete "<strong>{{ gallery.title or "Gallery " + gallery.id|string }}</strong>"?</p>
+            <p class="warning">This will permanently delete the gallery and all its images. This action cannot be undone.</p>
+            <div class="confirmation-input">
+                <label for="confirmText">Type the gallery name to confirm:</label>
+                <input type="text" id="confirmText" placeholder="{{ gallery.title or 'Gallery ' + gallery.id|string }}" 
+                       onkeyup="checkConfirmation()">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+            <form method="post" action="/gallery/{{ gallery.id }}/delete" style="display: inline;">
+                <button type="submit" id="deleteButton" class="btn btn-danger" disabled>
+                    <span class="icon">🗑️</span>
+                    Delete Gallery
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+function confirmDelete() {
+    document.getElementById('deleteModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    document.getElementById('confirmText').value = '';
+    document.getElementById('deleteButton').disabled = true;
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function checkConfirmation() {
+    const input = document.getElementById('confirmText');
+    const button = document.getElementById('deleteButton');
+    const expectedText = '{{ gallery.title or "Gallery " + gallery.id|string }}';
+    
+    if (input.value === expectedText) {
+        button.disabled = false;
+        button.classList.remove('disabled');
+    } else {
+        button.disabled = true;
+        button.classList.add('disabled');
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+
+// Auto-focus title field
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('title').focus();
+});
+</script>
+{% endblock %}

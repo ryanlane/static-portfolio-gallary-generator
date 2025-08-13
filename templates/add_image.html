@@ -29,55 +29,7 @@
     
     <a href="/gallery/{{ gallery_id }}">Back to Gallery</a>
     
-    <style>
-    .drop-zone {
-        border: 3px dashed rgba(255, 255, 255, 0.3);
-        border-radius: 10px;
-        padding: 60px;
-        text-align: center;
-        margin: 20px 0;
-        background: rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-    }
-    .drop-zone.dragover {
-        border-color: #007cba;
-        background: rgba(255, 255, 255, 0.2);;
-    }
-    .drop-zone-content p {
-        font-size: 18px;
-        margin: 10px 0;
-    }
-    #file-select-btn {
-        background: #007cba;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    .progress-bar {
-        width: 100%;
-        height: 20px;
-        background: #e0e0e0;
-        border-radius: 10px;
-        overflow: hidden;
-        margin: 10px 0;
-    }
-    .progress-fill {
-        height: 100%;
-        background: #4caf50;
-        width: 0%;
-        transition: width 0.3s ease;
-    }
-    .file-progress {
-        margin: 10px 0;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-    }
-    .success { border-color: #4caf50; background: rgba(200, 255, 200, 0.3); }
-    .error { border-color: #f44336; background: rgba(255, 200, 200, 0.3);; }
-    </style>
+
     
     <script>
     const dropZone = document.getElementById('drop-zone');

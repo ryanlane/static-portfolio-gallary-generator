@@ -1,14 +1,60 @@
 {% extends "base.html" %}
 {% block title %}{{ gallery.title or 'Gallery' }}{% endblock %}
 {% block content %}
-    <h1>{{ gallery.title or 'Untitled Gallery' }}</h1>
-    <p>{{ gallery.description }}</p>
-    <a href="/gallery/{{ gallery.id }}/add-image">Add Image</a>
-    <div class="gallery-flex">
-    {% for image in images %}
-        {% include "partials/_image_card.html" %}
-    {% endfor %}
+<div class="container">
+    <div class="gallery-view-header">
+        <div class="gallery-view-title-section">
+            <h1>{{ gallery.title or 'Untitled Gallery' }}</h1>
+            {% if gallery.description %}
+            <p class="gallery-view-description">{{ gallery.description }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="gallery-view-actions">
+            <a href="/gallery/{{ gallery.id }}/add-image" class="btn btn-primary">
+                <span class="icon">📷</span>
+                Add Images
+            </a>
+            <a href="/gallery/{{ gallery.id }}/edit" class="btn btn-secondary">
+                <span class="icon">✏️</span>
+                Edit Gallery
+            </a>
+        </div>
     </div>
-    <a href="/">Back to Galleries</a>
-    <script src="/static/gallery.js"></script>
+
+    {% if request.query_params.get('message') %}
+    <div class="alert alert-success">
+        {{ request.query_params.get('message') }}
+    </div>
+    {% endif %}
+
+    {% if images %}
+    <div class="gallery-flex">
+        {% for image in images %}
+            {% include "partials/_image_card.html" %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="gallery-view-empty">
+        <div class="gallery-view-empty-icon">📸</div>
+        <h3>No Images Yet</h3>
+        <p>Start building your gallery by adding some images.</p>
+        <a href="/gallery/{{ gallery.id }}/add-image" class="btn btn-primary">
+            <span class="icon">📷</span>
+            Add Your First Image
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="gallery-view-footer">
+        <a href="/galleries" class="btn btn-secondary">
+            <span class="icon">←</span>
+            Back to Galleries
+        </a>
+    </div>
+</div>
+
+
+
+<script src="/static/gallery.js"></script>
 {% endblock %}

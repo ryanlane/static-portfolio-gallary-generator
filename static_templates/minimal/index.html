@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_title or "Photo Gallery" }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .site-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2rem;
+        }
+        
+        .site-title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+        
+        .site-description {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .galleries-nav {
+            margin-bottom: 3rem;
+        }
+        
+        .galleries-nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .galleries-nav a {
+            text-decoration: none;
+            color: #333;
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .galleries-nav a:hover,
+        .galleries-nav a.active {
+            background: #333;
+            color: #fff;
+            border-color: #333;
+        }
+        
+        .gallery {
+            margin-bottom: 4rem;
+        }
+        
+        .gallery-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .gallery-title {
+            font-size: 2rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+        
+        .gallery-description {
+            color: #666;
+            font-size: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .image-item {
+            text-align: center;
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .image-item img:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        
+        .image-title {
+            margin-top: 1rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .image-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .image-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+        
+        .footer {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #eee;
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .site-title {
+                font-size: 2rem;
+            }
+            
+            .gallery-title {
+                font-size: 1.5rem;
+            }
+            
+            .images-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+            
+            .galleries-nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="site-header">
+            <h1 class="site-title">{{ site_title or "Photo Gallery" }}</h1>
+            {% if site_description %}
+            <p class="site-description">{{ site_description }}</p>
+            {% endif %}
+        </header>
+
+        {% if galleries|length > 1 %}
+        <nav class="galleries-nav">
+            <ul>
+                {% for gallery in galleries %}
+                <li><a href="#gallery-{{ gallery.id }}">{{ gallery.title or "Gallery " + gallery.id|string }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        <main>
+            {% for gallery in galleries %}
+            <section class="gallery" id="gallery-{{ gallery.id }}">
+                <header class="gallery-header">
+                    <h2 class="gallery-title">{{ gallery.title or "Gallery " + gallery.id|string }}</h2>
+                    {% if gallery.description %}
+                    <p class="gallery-description">{{ gallery.description }}</p>
+                    {% endif %}
+                </header>
+
+                <div class="images-grid">
+                    {% for image in gallery.images %}
+                    {% if image.enabled %}
+                    <div class="image-item">
+                        <img src="images/{{ image.filename }}" alt="{{ image.title or image.filename }}">
+                        {% if image.title %}
+                        <h3 class="image-title">{{ image.title }}</h3>
+                        {% endif %}
+                        {% if image.description %}
+                        <p class="image-description">{{ image.description }}</p>
+                        {% endif %}
+                        {% if image.camera_type or image.lens %}
+                        <div class="image-meta">
+                            {% if image.camera_type %}{{ image.camera_type }}{% endif %}
+                            {% if image.camera_type and image.lens %} • {% endif %}
+                            {% if image.lens %}{{ image.lens }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        </main>
+
+        <footer class="footer">
+            <p>Generated by Static Portfolio Gallery Generator</p>
+        </footer>
+    </div>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.galleries-nav a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Update active navigation link on scroll
+        function updateActiveNav() {
+            const galleries = document.querySelectorAll('.gallery');
+            const navLinks = document.querySelectorAll('.galleries-nav a');
+            
+            galleries.forEach((gallery, index) => {
+                const rect = gallery.getBoundingClientRect();
+                if (rect.top <= 100 && rect.bottom > 100) {
+                    navLinks.forEach(link => link.classList.remove('active'));
+                    if (navLinks[index]) {
+                        navLinks[index].classList.add('active');
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveNav);
+        updateActiveNav(); // Set initial state
+    </script>
+</body>
+</html>
