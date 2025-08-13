@@ -46,9 +46,9 @@
         </div>
 
         <!-- Action Cards -->
-        <div class="action-cards">
-            <div class="action-card">
-                <div class="card-icon">📦</div>
+        <div class="results-action-cards">
+            <div class="results-action-card">
+                <div class="results-card-icon">📦</div>
                 <h3>Download Website</h3>
                 <p>Get the complete static website as a ZIP file ready for deployment to any web hosting service.</p>
                 <div>
@@ -56,7 +56,7 @@
                         <span class="icon">⬇️</span>
                         Download ZIP File
                     </a>
-                    <div class="file-info">
+                    <div class="results-file-info">
                         <small>File: {{ zip_filename }} ({{ file_size }})</small>
                     </div>
                 </div>
@@ -65,18 +65,18 @@
 
         <!-- Gallery Summary -->
         {% if galleries %}
-        <div class="gallery-summary">
+        <div class="results-gallery-summary">
             <h3>📁 Included Galleries</h3>
-            <div class="gallery-list">
+            <div class="results-gallery-list">
                 {% for gallery in galleries %}
-                <div class="gallery-item">
-                    <div class="gallery-info">
+                <div class="results-gallery-item">
+                    <div class="results-gallery-info">
                         <h4>{{ gallery.title or "Gallery " + gallery.id|string }}</h4>
                         {% if gallery.description %}
                         <p>{{ gallery.description }}</p>
                         {% endif %}
-                        <div class="gallery-stats">
-                            <span class="stat">{{ gallery.images|length }} images</span>
+                        <div class="results-gallery-stats">
+                            <span class="results-stat">{{ gallery.images|length }} images</span>
                         </div>
                     </div>
                 </div>
@@ -86,28 +86,28 @@
         {% endif %}
 
         <!-- Next Steps -->
-        <div class="next-steps">
+        <div class="results-next-steps">
             <h3>🚀 What's Next?</h3>
-            <div class="steps-grid">
-                <div class="step-item">
-                    <div class="step-icon">📤</div>
-                    <div class="step-content">
+            <div class="results-steps-grid">
+                <div class="results-step-item">
+                    <div class="results-step-icon">📤</div>
+                    <div class="results-step-content">
                         <h4>1. Download the ZIP</h4>
                         <p>Get your website files by clicking the download button above</p>
                     </div>
                 </div>
                 
-                <div class="step-item">
-                    <div class="step-icon">📂</div>
-                    <div class="step-content">
+                <div class="results-step-item">
+                    <div class="results-step-icon">📂</div>
+                    <div class="results-step-content">
                         <h4>2. Extract Files</h4>
                         <p>Unzip the downloaded file to access your website files</p>
                     </div>
                 </div>
                 
-                <div class="step-item">
-                    <div class="step-icon">🌐</div>
-                    <div class="step-content">
+                <div class="results-step-item">
+                    <div class="results-step-icon">🌐</div>
+                    <div class="results-step-content">
                         <h4>3. Deploy Online</h4>
                         <p>Upload the files to your web hosting service or use services like Netlify, Vercel, or GitHub Pages</p>
                     </div>
@@ -116,8 +116,8 @@
         </div>
 
         <!-- Additional Actions -->
-        <div class="additional-actions">
-            <div class="action-links">
+        <div class="results-additional-actions">
+            <div class="results-action-links">
                 <a href="/generate" class="btn btn-outline">
                     <span class="icon">🔄</span>
                     Generate Another Site
