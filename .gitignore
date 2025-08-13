@@ -183,7 +183,7 @@ cython_debug/
 #local gallery files
 static/gallery_*/
 static/thumbs/
-gallery.db
+*.db
 
 #Generated Site data
 *.zip
