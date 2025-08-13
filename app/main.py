@@ -38,46 +38,74 @@ def get_db():
 
 @app.on_event('startup')
 def startup():
-    conn = get_db()
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS galleries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        description TEXT,
-        featured_image_id INTEGER
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        gallery_id INTEGER,
-        filename TEXT,
-        title TEXT,
-        description TEXT,
-        camera_type TEXT,
-        lens TEXT,
-        settings TEXT,
-        exif TEXT,
-        enabled INTEGER DEFAULT 1,
-        sort_order INTEGER DEFAULT 0,
-        FOREIGN KEY(gallery_id) REFERENCES galleries(id)
-    )''')
-    
-    # Add sort_order column if it doesn't exist (for existing databases)
+    """Initialize database and create tables on startup"""
     try:
-        c.execute('ALTER TABLE images ADD COLUMN sort_order INTEGER DEFAULT 0')
-    except:
-        pass  # Column already exists
-    
-    conn.commit()
-    conn.close()
+        conn = get_db()
+        c = conn.cursor()
+        
+        # Create galleries table
+        c.execute('''CREATE TABLE IF NOT EXISTS galleries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT,
+            featured_image_id INTEGER
+        )''')
+        
+        # Create images table
+        c.execute('''CREATE TABLE IF NOT EXISTS images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            gallery_id INTEGER,
+            filename TEXT,
+            title TEXT,
+            description TEXT,
+            camera_type TEXT,
+            lens TEXT,
+            settings TEXT,
+            exif TEXT,
+            enabled INTEGER DEFAULT 1,
+            sort_order INTEGER DEFAULT 0,
+            FOREIGN KEY(gallery_id) REFERENCES galleries(id)
+        )''')
+        
+        # Add sort_order column if it doesn't exist (for existing databases)
+        try:
+            c.execute('ALTER TABLE images ADD COLUMN sort_order INTEGER DEFAULT 0')
+        except:
+            pass  # Column already exists
+        
+        conn.commit()
+        conn.close()
+        
+        # Create necessary directories
+        os.makedirs('static/thumbs', exist_ok=True)
+        os.makedirs('static/generated_sites', exist_ok=True)
+        os.makedirs('downloads', exist_ok=True)
+        
+        print("✅ Database initialized successfully")
+        
+    except Exception as e:
+        print(f"❌ Database initialization error: {e}")
+        # Create empty database file if it doesn't exist
+        if not os.path.exists(DB_PATH):
+            open(DB_PATH, 'a').close()
+            print("🔄 Created empty database file, retrying...")
+            startup()  # Retry once
 
 @app.get('/', response_class=HTMLResponse)
-def dashboard(request: Request):
+def dashboard(request: Request, skip_welcome: bool = False):
     """Dashboard homepage with overview and quick actions"""
     conn = get_db()
     c = conn.cursor()
     
-    # Get overview stats
+    # Check if this is a first run (no galleries exist)
     total_galleries = c.execute('SELECT COUNT(*) as count FROM galleries').fetchone()['count']
+    
+    # If no galleries exist and not skipping welcome, show welcome page
+    if total_galleries == 0 and not skip_welcome:
+        conn.close()
+        return templates.TemplateResponse('welcome.html', {'request': request})
+    
+    # Get overview stats
     total_images = c.execute('SELECT COUNT(*) as count FROM images').fetchone()['count']
     enabled_images = c.execute('SELECT COUNT(*) as count FROM images WHERE enabled=1').fetchone()['count']
     
@@ -142,6 +170,11 @@ def view_gallery(request: Request, gallery_id: int):
 @app.get('/create-gallery', response_class=HTMLResponse)
 def create_gallery_form(request: Request):
     return templates.TemplateResponse('create_gallery.html', {'request': request})
+
+@app.get('/welcome', response_class=HTMLResponse)
+def welcome_page(request: Request):
+    """Dedicated welcome page for first-time users"""
+    return templates.TemplateResponse('welcome.html', {'request': request})
 
 @app.post('/create-gallery')
 def create_gallery(title: str = Form(...), description: str = Form(None)):

@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% block title %}Welcome - Gallery Manager{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="welcome-page">
+        <!-- Hero Welcome Section -->
+        <div class="welcome-hero">
+            <div class="welcome-animation">
+                <div class="gallery-icons">
+                    <div class="icon-float">📸</div>
+                    <div class="icon-float">🖼️</div>
+                    <div class="icon-float">🎨</div>
+                    <div class="icon-float">🌐</div>
+                </div>
+            </div>
+            
+            <div class="welcome-content">
+                <h1>Welcome to Gallery Manager!</h1>
+                <p class="welcome-subtitle">Transform your photos into beautiful static websites</p>
+                
+                <div class="welcome-features">
+                    <div class="feature-highlight">
+                        <span class="feature-icon">✨</span>
+                        <span>Organize photos into galleries</span>
+                    </div>
+                    <div class="feature-highlight">
+                        <span class="feature-icon">🚀</span>
+                        <span>Generate static websites</span>
+                    </div>
+                    <div class="feature-highlight">
+                        <span class="feature-icon">📱</span>
+                        <span>Mobile-responsive themes</span>
+                    </div>
+                </div>
+
+                <div class="welcome-cta">
+                    <a href="/create-gallery" class="btn btn-primary btn-large">
+                        <span class="icon">🎯</span>
+                        Create Your First Gallery
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary btn-large">
+                        <span class="icon">❓</span>
+                        How It Works
+                    </a>
+                </div>
+                
+                <div class="skip-welcome">
+                    <a href="/?skip_welcome=true" class="skip-link">
+                        Skip to Dashboard →
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Section -->
+        <div id="how-it-works" class="how-it-works">
+            <h2>🚀 How It Works</h2>
+            <p class="section-subtitle">Get started in just a few simple steps</p>
+            
+            <div class="workflow-steps">
+                <div class="workflow-step">
+                    <div class="step-visual">
+                        <div class="step-icon">📁</div>
+                        <div class="step-number">1</div>
+                    </div>
+                    <div class="step-content">
+                        <h3>Create Galleries</h3>
+                        <p>Organize your photos by theme, event, or any way you like. Give each gallery a descriptive title and description.</p>
+                        <div class="step-example">
+                            <strong>Examples:</strong> "Summer Vacation 2024", "Wedding Photography", "Nature Landscapes"
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-visual">
+                        <div class="step-icon">📷</div>
+                        <div class="step-number">2</div>
+                    </div>
+                    <div class="step-content">
+                        <h3>Upload Images</h3>
+                        <p>Add photos to your galleries with drag & drop. EXIF data is automatically extracted to capture camera settings.</p>
+                        <div class="step-features">
+                            <span class="feature-tag">Batch Upload</span>
+                            <span class="feature-tag">EXIF Extraction</span>
+                            <span class="feature-tag">Auto Thumbnails</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-visual">
+                        <div class="step-icon">🎨</div>
+                        <div class="step-number">3</div>
+                    </div>
+                    <div class="step-content">
+                        <h3>Organize & Customize</h3>
+                        <p>Set featured images, add descriptions, reorder photos, and fine-tune your galleries for the perfect presentation.</p>
+                        <div class="step-features">
+                            <span class="feature-tag">Drag & Drop Reorder</span>
+                            <span class="feature-tag">Featured Images</span>
+                            <span class="feature-tag">Rich Metadata</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="workflow-step">
+                    <div class="step-visual">
+                        <div class="step-icon">🌐</div>
+                        <div class="step-number">4</div>
+                    </div>
+                    <div class="step-content">
+                        <h3>Generate Website</h3>
+                        <p>Choose from beautiful themes and generate a complete static website that you can host anywhere.</p>
+                        <div class="step-features">
+                            <span class="feature-tag">Multiple Themes</span>
+                            <span class="feature-tag">Static HTML</span>
+                            <span class="feature-tag">Ready to Deploy</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Showcase -->
+        <div class="features-showcase">
+            <h2>✨ Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-large">📸</div>
+                    <h3>Smart Organization</h3>
+                    <p>Organize photos into themed galleries with rich metadata and automatic EXIF data extraction.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-large">🎨</div>
+                    <h3>Beautiful Themes</h3>
+                    <p>Choose from professionally designed themes that are mobile-responsive and customizable.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-large">⚡</div>
+                    <h3>Static Generation</h3>
+                    <p>Generate fast, secure static websites that can be hosted anywhere - no database required.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-large">📱</div>
+                    <h3>Mobile Friendly</h3>
+                    <p>All generated sites are fully responsive and look great on phones, tablets, and desktops.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-large">🔧</div>
+                    <h3>Easy Management</h3>
+                    <p>Intuitive interface for uploading, organizing, and managing your photo collections.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon-large">💾</div>
+                    <h3>Export Ready</h3>
+                    <p>Download complete website packages ready for deployment to any web hosting service.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start Guide -->
+        <div class="quick-start">
+            <div class="quick-start-content">
+                <h2>🎯 Ready to Get Started?</h2>
+                <p>Create your first gallery and start building your photo portfolio today!</p>
+                
+                <div class="quick-start-actions">
+                    <a href="/create-gallery" class="btn btn-primary btn-large">
+                        <span class="icon">🚀</span>
+                        Create First Gallery
+                    </a>
+                    <div class="quick-start-help">
+                        <p>Need help? Check out our <a href="#how-it-works">step-by-step guide</a> above.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sample Preview -->
+        <div class="sample-preview">
+            <h2>🖼️ Example Gallery</h2>
+            <p>Here's what your galleries will look like:</p>
+            
+            <div class="sample-gallery">
+                <div class="sample-header">
+                    <h3>Sample Gallery: Nature Photography</h3>
+                    <p>Beautiful landscapes and wildlife photography from various locations</p>
+                </div>
+                
+                <div class="sample-images">
+                    <div class="sample-image">
+                        <div class="placeholder-img">🏔️</div>
+                        <div class="sample-title">Mountain Sunrise</div>
+                    </div>
+                    <div class="sample-image">
+                        <div class="placeholder-img">🌲</div>
+                        <div class="sample-title">Forest Path</div>
+                    </div>
+                    <div class="sample-image">
+                        <div class="placeholder-img">🦅</div>
+                        <div class="sample-title">Eagle in Flight</div>
+                    </div>
+                    <div class="sample-image">
+                        <div class="placeholder-img">🌊</div>
+                        <div class="sample-title">Ocean Waves</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Smooth scrolling for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+    
+    anchorLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            const targetElement = document.getElementById(targetId);
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+});
+
+// Floating animation for gallery icons
+document.addEventListener('DOMContentLoaded', function() {
+    const iconFloats = document.querySelectorAll('.icon-float');
+    
+    iconFloats.forEach((icon, index) => {
+        // Stagger the animation start times
+        setTimeout(() => {
+            icon.style.animationDelay = `${index * 0.5}s`;
+        }, 100);
+    });
+});
+</script>
+{% endblock %}

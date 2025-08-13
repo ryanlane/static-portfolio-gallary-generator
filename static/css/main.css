@@ -4,6 +4,7 @@
 @import '_gallery.css';
 @import '_image-card.css';
 @import '_dashboard.css';
+@import '_welcome.css';
 
 /* Import component styles */
 @import '_gallery_list.css';
