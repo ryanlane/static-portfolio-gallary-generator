@@ -179,10 +179,12 @@ def welcome_page(request: Request):
 @app.post('/create-gallery')
 def create_gallery(title: str = Form(...), description: str = Form(None)):
     conn = get_db()
-    conn.execute('INSERT INTO galleries (title, description) VALUES (?, ?)', (title, description))
+    cur = conn.cursor()
+    cur.execute('INSERT INTO galleries (title, description) VALUES (?, ?)', (title, description))
+    gallery_id = cur.lastrowid  # Get the ID of the newly created gallery
     conn.commit()
     conn.close()
-    return RedirectResponse('/', status_code=303)
+    return RedirectResponse(f'/gallery/{gallery_id}', status_code=303)
 
 # Gallery CRUD operations
 @app.get('/galleries', response_class=HTMLResponse)
@@ -701,7 +703,8 @@ def generate_static_site(
                 f.write(rendered_html)
             
             # Create ZIP file
-            zip_path = os.path.join('static', 'generated_sites', f'site_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip')
+            zip_filename = f'site_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+            zip_path = os.path.join('static', 'generated_sites', zip_filename)
             os.makedirs(os.path.dirname(zip_path), exist_ok=True)
             
             with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -711,8 +714,12 @@ def generate_static_site(
                         arcname = os.path.relpath(file_path, temp_dir)
                         zipf.write(file_path, arcname)
             
-            # Return download link
-            return RedirectResponse(f'/generate?success=Site+generated+successfully&download={os.path.basename(zip_path)}', status_code=303)
+            # Get file size for display
+            file_size = os.path.getsize(zip_path)
+            file_size_mb = file_size / (1024 * 1024)
+            
+            # Store generation info in session/query params for results page
+            return RedirectResponse(f'/generate/results?zip={zip_filename}&title={site_title}&desc={site_description}&theme={theme}&galleries={len(galleries)}&images={sum(len(g["images"]) for g in galleries)}&size={file_size_mb:.1f}', status_code=303)
             
         finally:
             # Cleanup temp directory
@@ -720,6 +727,43 @@ def generate_static_site(
             
     except Exception as e:
         return RedirectResponse(f'/generate?error=Generation+failed:+{str(e)}', status_code=303)
+
+@app.get('/generate/results', response_class=HTMLResponse)
+def generate_results(request: Request):
+    """Show generation results with download and preview links"""
+    # Get parameters from query string
+    zip_filename = request.query_params.get('zip', '')
+    site_title = request.query_params.get('title', 'My Photo Gallery')
+    site_description = request.query_params.get('desc', '')
+    theme = request.query_params.get('theme', 'minimal')
+    gallery_count = int(request.query_params.get('galleries', 0))
+    image_count = int(request.query_params.get('images', 0))
+    file_size = request.query_params.get('size', '0.0')
+    
+    if not zip_filename:
+        return RedirectResponse('/generate?error=No+generation+data+found', status_code=303)
+    
+    # Check if file exists
+    zip_path = os.path.join('static', 'generated_sites', zip_filename)
+    if not os.path.exists(zip_path):
+        return RedirectResponse('/generate?error=Generated+file+not+found', status_code=303)
+    
+    # Get file stats
+    file_stat = os.stat(zip_path)
+    generated_time = datetime.fromtimestamp(file_stat.st_mtime)
+    
+    return templates.TemplateResponse('generate_results.html', {
+        'request': request,
+        'zip_filename': zip_filename,
+        'site_title': site_title,
+        'site_description': site_description,
+        'theme': theme,
+        'gallery_count': gallery_count,
+        'image_count': image_count,
+        'file_size': f'{file_size} MB',
+        'generated_time': generated_time,
+        'galleries': []  # We could store this info if needed
+    })
 
 @app.get('/download/{filename}')
 def download_generated_site(filename: str):

@@ -64,7 +64,7 @@
             <div class="gallery-selection">
                 {% for gallery in galleries %}
                 <div class="gallery-option">
-                    <input type="checkbox" id="gallery_{{ gallery.id }}" name="gallery_ids" value="{{ gallery.id }}" checked>
+                    <input type="checkbox" id="gallery_{{ gallery.id }}" name="gallery_ids" value="{{ gallery.id }}">
                     <label for="gallery_{{ gallery.id }}" class="gallery-card">
                         <div class="gallery-info">
                             <h3>{{ gallery.title or "Gallery " + gallery.id|string }}</h3>

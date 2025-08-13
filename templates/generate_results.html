@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Site Generated Successfully{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="generate-results">
+        <!-- Success Header -->
+        <div class="results-header">
+            <div class="success-icon">🎉</div>
+            <h1>Your Website is Ready!</h1>
+            <p>Your static gallery website has been successfully generated and is ready to download.</p>
+        </div>
+
+        <!-- Site Info -->
+        <div class="site-info">
+            <div class="info-card">
+                <h3>📄 Site Details</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <strong>Site Title:</strong>
+                        <span>{{ site_title }}</span>
+                    </div>
+                    {% if site_description %}
+                    <div class="info-item">
+                        <strong>Description:</strong>
+                        <span>{{ site_description }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="info-item">
+                        <strong>Theme:</strong>
+                        <span>{{ theme.replace('_', ' ').title() }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Galleries Included:</strong>
+                        <span>{{ gallery_count }} galleries</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Total Images:</strong>
+                        <span>{{ image_count }} images</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Generated:</strong>
+                        <span>{{ generated_time.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="action-cards">
+            <div class="action-card">
+                <div class="card-icon">📦</div>
+                <h3>Download Website</h3>
+                <p>Get the complete static website as a ZIP file ready for deployment to any web hosting service.</p>
+                <div>
+                    <a href="/download/{{ zip_filename }}" class="btn btn-primary btn-large">
+                        <span class="icon">⬇️</span>
+                        Download ZIP File
+                    </a>
+                    <div class="file-info">
+                        <small>File: {{ zip_filename }} ({{ file_size }})</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Summary -->
+        {% if galleries %}
+        <div class="gallery-summary">
+            <h3>📁 Included Galleries</h3>
+            <div class="gallery-list">
+                {% for gallery in galleries %}
+                <div class="gallery-item">
+                    <div class="gallery-info">
+                        <h4>{{ gallery.title or "Gallery " + gallery.id|string }}</h4>
+                        {% if gallery.description %}
+                        <p>{{ gallery.description }}</p>
+                        {% endif %}
+                        <div class="gallery-stats">
+                            <span class="stat">{{ gallery.images|length }} images</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Next Steps -->
+        <div class="next-steps">
+            <h3>🚀 What's Next?</h3>
+            <div class="steps-grid">
+                <div class="step-item">
+                    <div class="step-icon">📤</div>
+                    <div class="step-content">
+                        <h4>1. Download the ZIP</h4>
+                        <p>Get your website files by clicking the download button above</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-icon">📂</div>
+                    <div class="step-content">
+                        <h4>2. Extract Files</h4>
+                        <p>Unzip the downloaded file to access your website files</p>
+                    </div>
+                </div>
+                
+                <div class="step-item">
+                    <div class="step-icon">🌐</div>
+                    <div class="step-content">
+                        <h4>3. Deploy Online</h4>
+                        <p>Upload the files to your web hosting service or use services like Netlify, Vercel, or GitHub Pages</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Actions -->
+        <div class="additional-actions">
+            <div class="action-links">
+                <a href="/generate" class="btn btn-outline">
+                    <span class="icon">🔄</span>
+                    Generate Another Site
+                </a>
+                <a href="/" class="btn btn-outline">
+                    <span class="icon">🏠</span>
+                    Back to Dashboard
+                </a>
+                <a href="/galleries" class="btn btn-outline">
+                    <span class="icon">📁</span>
+                    Manage Galleries
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus download button for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.querySelector('a[href*="/download/"]');
+    if (downloadBtn) {
+        downloadBtn.focus();
+    }
+});
+
+// Show file size in human readable format
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInfoElements = document.querySelectorAll('.file-info small');
+    fileInfoElements.forEach(element => {
+        const text = element.textContent;
+        // This would be populated by the backend with actual file size
+    });
+});
+</script>
+{% endblock %}

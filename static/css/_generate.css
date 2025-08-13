@@ -132,11 +132,6 @@
     pointer-events: none;
 }
 
-.gallery-option:hover {
-    border-color: var(--primary-color);
-    background: rgba(255,255,255,0.3);
-}
-
 .gallery-card {
     display: flex;
     align-items: center;
@@ -148,11 +143,19 @@
     transition: all 0.3s ease;
 }
 
+.gallery-card:hover {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
 
 
 .gallery-option input[type="checkbox"]:checked + .gallery-card {
-    border-color: var(--primary-color);
-    background: rgba(52, 152, 219, 0.05);
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
 }
 
 .gallery-info {
