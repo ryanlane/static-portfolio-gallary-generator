@@ -1,19 +1,208 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Image</title>
-</head>
-<body>
-    <h1>Add Image to Gallery</h1>
-    <form method="post" enctype="multipart/form-data">
-        <label>Image File: <input type="file" name="file"></label><br>
-        <label>Title: <input type="text" name="title"></label><br>
-        <label>Description: <textarea name="description"></textarea></label><br>
-        <label>Camera Type: <input type="text" name="camera_type"></label><br>
-        <label>Lens: <input type="text" name="lens"></label><br>
-        <label>Settings: <input type="text" name="settings"></label><br>
-        <button type="submit">Add Image</button>
-    </form>
+{% extends "base.html" %}
+{% block title %}Add Images{% endblock %}
+{% block content %}
+    <h1>Add Images to Gallery</h1>
+    
+    <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-content">
+            <p>Drag & drop images here or <button id="file-select-btn">Browse Files</button></p>
+            <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+        </div>
+    </div>
+    
+    <div id="upload-progress" style="display: none;">
+        <h3>Uploading Images...</h3>
+        <div id="progress-list"></div>
+        <div class="overall-progress">
+            <div class="progress-bar">
+                <div id="overall-progress-fill" class="progress-fill"></div>
+            </div>
+            <span id="progress-text">0%</span>
+        </div>
+    </div>
+    
+    <div id="upload-results" style="display: none;">
+        <h3>Upload Complete</h3>
+        <div id="results-list"></div>
+        <button onclick="window.location.href='/gallery/{{ gallery_id }}'">View Gallery</button>
+    </div>
+    
     <a href="/gallery/{{ gallery_id }}">Back to Gallery</a>
-</body>
-</html>
+    
+    <style>
+    .drop-zone {
+        border: 3px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        padding: 60px;
+        text-align: center;
+        margin: 20px 0;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    .drop-zone.dragover {
+        border-color: #007cba;
+        background: rgba(255, 255, 255, 0.2);;
+    }
+    .drop-zone-content p {
+        font-size: 18px;
+        margin: 10px 0;
+    }
+    #file-select-btn {
+        background: #007cba;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .progress-bar {
+        width: 100%;
+        height: 20px;
+        background: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+    .progress-fill {
+        height: 100%;
+        background: #4caf50;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    .file-progress {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    .success { border-color: #4caf50; background: rgba(200, 255, 200, 0.3); }
+    .error { border-color: #f44336; background: rgba(255, 200, 200, 0.3);; }
+    </style>
+    
+    <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileSelectBtn = document.getElementById('file-select-btn');
+    const uploadProgress = document.getElementById('upload-progress');
+    const uploadResults = document.getElementById('upload-results');
+    const galleryId = {{ gallery_id }};
+    
+    // File selection
+    fileSelectBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+    
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+    
+    function handleFiles(files) {
+        if (files.length === 0) return;
+        
+        // Show progress section
+        uploadProgress.style.display = 'block';
+        dropZone.style.display = 'none';
+        
+        uploadFiles(Array.from(files));
+    }
+    
+    async function uploadFiles(files) {
+        const progressList = document.getElementById('progress-list');
+        const overallProgressFill = document.getElementById('overall-progress-fill');
+        const progressText = document.getElementById('progress-text');
+        const resultsList = document.getElementById('results-list');
+        
+        let completed = 0;
+        const results = [];
+        
+        // Create progress elements for each file
+        files.forEach((file, index) => {
+            const fileProgress = document.createElement('div');
+            fileProgress.className = 'file-progress';
+            fileProgress.innerHTML = `
+                <div><strong>${file.name}</strong></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-${index}"></div>
+                </div>
+                <div id="status-${index}">Uploading...</div>
+            `;
+            progressList.appendChild(fileProgress);
+        });
+        
+        // Upload files using FormData
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        
+        try {
+            const response = await fetch(`/gallery/${galleryId}/upload-multiple`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Update progress and results
+            data.results.forEach((result, index) => {
+                const progressFill = document.getElementById(`progress-${index}`);
+                const status = document.getElementById(`status-${index}`);
+                const fileProgress = progressFill.closest('.file-progress');
+                
+                progressFill.style.width = '100%';
+                
+                if (result.success) {
+                    status.textContent = `✓ Uploaded successfully`;
+                    fileProgress.classList.add('success');
+                    
+                    // Show extracted data
+                    if (result.camera_type || result.lens || result.settings) {
+                        const details = document.createElement('div');
+                        details.innerHTML = `
+                            <small>
+                                ${result.camera_type ? `Camera: ${result.camera_type}<br>` : ''}
+                                ${result.lens ? `Lens: ${result.lens}<br>` : ''}
+                                ${result.settings ? `Settings: ${result.settings}` : ''}
+                            </small>
+                        `;
+                        status.appendChild(details);
+                    }
+                } else {
+                    status.textContent = `✗ Error: ${result.error}`;
+                    fileProgress.classList.add('error');
+                }
+                completed++;
+            });
+            
+            // Update overall progress
+            const overallPercent = Math.round((completed / files.length) * 100);
+            overallProgressFill.style.width = `${overallPercent}%`;
+            progressText.textContent = `${overallPercent}%`;
+            
+            // Show results
+            setTimeout(() => {
+                uploadResults.style.display = 'block';
+                const successCount = data.results.filter(r => r.success).length;
+                resultsList.innerHTML = `
+                    <p><strong>${successCount} of ${files.length} images uploaded successfully</strong></p>
+                    ${data.results.filter(r => !r.success).length > 0 ? 
+                        `<p style="color: red;">Failed uploads: ${data.results.filter(r => !r.success).map(r => r.filename).join(', ')}</p>` : ''}
+                `;
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Upload failed. Please try again.');
+        }
+    }
+    </script>
+{% endblock %}

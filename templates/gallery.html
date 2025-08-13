@@ -1,25 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ gallery.title or 'Gallery' }}</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}{{ gallery.title or 'Gallery' }}{% endblock %}
+{% block content %}
     <h1>{{ gallery.title or 'Untitled Gallery' }}</h1>
     <p>{{ gallery.description }}</p>
     <a href="/gallery/{{ gallery.id }}/add-image">Add Image</a>
-    <ul>
+    <div class="gallery-flex">
     {% for image in images %}
-        <li>
-            <img src="/static/gallery_{{ gallery.id }}/{{ image.filename }}" width="200"><br>
-            <strong>{{ image.title }}</strong><br>
-            {{ image.description }}<br>
-            Camera: {{ image.camera_type }}<br>
-            Lens: {{ image.lens }}<br>
-            Settings: {{ image.settings }}<br>
-            EXIF: {{ image.exif }}
-        </li>
+        {% include "partials/_image_card.html" %}
     {% endfor %}
-    </ul>
+    </div>
     <a href="/">Back to Galleries</a>
-</body>
-</html>
+    <script src="/static/gallery.js"></script>
+{% endblock %}

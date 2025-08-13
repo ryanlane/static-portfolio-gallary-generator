@@ -1,15 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Image Galleries</title>
-</head>
-<body>
-    <h1>Galleries</h1>
+{% extends "base.html" %}
+{% block title %}Galleries{% endblock %}
+{% block content %}
     <a href="/create-gallery">Create New Gallery</a>
-    <ul>
+    <div class="gallery-list">
     {% for gallery in galleries %}
-        <li><a href="/gallery/{{ gallery.id }}">{{ gallery.title or 'Untitled Gallery' }}</a> - {{ gallery.description }}</li>
+        <div class="gallery-list-item">
+            <a href="/gallery/{{ gallery.id }}">
+                {% if featured_images[gallery.id] is defined %}
+                    <img src="/static/gallery_{{ gallery.id }}/{{ featured_images[gallery.id].filename }}" width="180" style="display:block;margin-bottom:0.5rem;">
+                {% endif %}
+                <strong>{{ gallery.title or 'Untitled Gallery' }}</strong>
+            </a>
+            <div>{{ gallery.description }}</div>
+        </div>
     {% endfor %}
-    </ul>
-</body>
-</html>
+    </div>
+{% endblock %}

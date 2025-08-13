@@ -1,9 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Create Gallery</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Create Gallery{% endblock %}
+{% block content %}
     <h1>Create Gallery</h1>
     <form method="post">
         <label>Title: <input type="text" name="title"></label><br>
@@ -11,5 +8,4 @@
         <button type="submit">Create</button>
     </form>
     <a href="/">Back to Galleries</a>
-</body>
-</html>
+{% endblock %}

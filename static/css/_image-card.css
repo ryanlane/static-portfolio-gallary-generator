@@ -1,0 +1,215 @@
+/* Image card styles */
+.card {
+    background-color: var(--card-bg);
+    padding: 1em;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-bottom: 1em;
+    max-width: 300px;
+    position: relative;
+    cursor: grab;
+    transition: all 0.2s ease;
+}
+
+.card:active {
+    cursor: grabbing;
+}
+
+.card.is-disabled {
+    opacity: 0.5;
+    filter: grayscale(100%);
+}
+
+/* Drag and drop styles */
+.card.dragging {
+    opacity: 0.6;
+    transform: rotate(2deg);
+    z-index: 1000;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.card.drag-over {
+    border: 2px dashed var(--primary-color);
+    background-color: rgba(255, 102, 0, 0.1);
+}
+
+.drag-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 5;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    cursor: grab;
+    padding: 4px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.drag-handle:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Featured image styling */
+.card.is-featured {
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+.card .image-container {
+    position: relative;
+}
+
+.featured-star {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+}
+
+.star-toggle {
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    color: #ffd700;
+}
+
+.star-toggle:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+/* Image card content */
+.image-info {
+    margin-top: 0.5rem;
+}
+
+.title-display {
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.description {
+    font-size: 0.9rem;
+    color: #ccc;
+    margin-bottom: 0.25rem;
+}
+
+/* Edit mode styles */
+.title-edit input,
+.title-edit textarea {
+    width: 100%;
+    padding: 0.25rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: #222;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.title-edit textarea {
+    min-height: 50px;
+    resize: vertical;
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.edit-buttons button {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.save-edit {
+    background: #0066cc;
+    color: white;
+}
+
+.cancel-edit {
+    background: var(--border-color);
+    color: white;
+}
+
+.edit-buttons button:hover {
+    opacity: 0.8;
+}
+
+/* EXIF data styling */
+.exif-section {
+    margin-top: 1rem;
+}
+
+.exif-toggle {
+    background: rgba(240, 240, 240, 0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+    text-align: left;
+    color: var(--text-light);
+}
+
+.exif-toggle:hover {
+    background: rgba(240, 240, 240, 0.2);
+}
+
+.exif-data {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(249, 249, 249, 0.1);
+    border: 1px solid rgba(224, 224, 224, 0.2);
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.exif-content {
+    font-size: 0.8em;
+}
+
+.exif-item {
+    margin: 0.25rem 0;
+    font-size: 0.8rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.exif-key {
+    font-weight: bold;
+    color: #f0f0f0;
+    flex: 1;
+    margin-right: 0.5rem;
+}
+
+.exif-value {
+    flex: 1;
+    text-align: right;
+    word-break: break-word;
+    color: #ccc;
+}
+
+/* Mobile card styles */
+@media (max-width: 768px) {
+    .card {
+        max-width: 100%;
+    }
+}

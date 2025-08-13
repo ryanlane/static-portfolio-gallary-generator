@@ -1,0 +1,43 @@
+/* Base styles and resets */
+:root {
+    color-scheme: light dark;
+    --primary-color: #ff6600;
+    --primary-hover: #ff8833;
+    --primary-light: rgba(255, 102, 0, 0.1);
+    --background-dark: #111;
+    --text-light: #eee;
+    --card-bg: rgba(255, 255, 255, 0.1);
+    --border-color: #666;
+}
+
+body {
+    margin: 0;
+    padding: 30px;
+    font-family: system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: var(--background-dark);
+    color: var(--text-light);
+}
+
+main {
+    padding: 1em;
+}
+
+a {
+    color: #0077cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    body {
+        padding: 0 !important;
+    }
+
+    main {
+        padding: 12px;
+    }
+}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<form method="post" action="/settings/reset" onsubmit="return confirm('Are you sure you want to reset the image database? This will delete all galleries, images, and files.');">
+    <button type="submit" style="background:#c00;color:#fff;padding:1em 2em;border:none;border-radius:6px;font-size:1.1em;">Reset Image Database</button>
+</form>
+{% if message %}
+    <div class="message">{{ message }}</div>
+{% endif %}
+{% endblock %}

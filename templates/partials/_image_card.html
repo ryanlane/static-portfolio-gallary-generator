@@ -1,0 +1,108 @@
+<div class="card {{ '' if image.enabled else 'is-disabled' }} {{ 'is-featured' if gallery.featured_image_id == image.id else '' }}" 
+     id="img-{{ image.id }}" 
+     draggable="true" 
+     data-id="{{ image.id }}" 
+     data-gallery-id="{{ gallery.id }}">
+  <div class="drag-handle">⋮⋮</div>
+  <div class="image-container">
+    <img src="/static/thumbs/{{ image.filename }}" alt="" style="width:100%;border-radius:8px">
+    <div class="featured-star">
+      <button class="star-toggle" data-id="{{ image.id }}" data-gallery-id="{{ gallery.id }}" title="{{ 'Remove as featured' if gallery.featured_image_id == image.id else 'Set as featured' }}">
+        {{ '⭐' if gallery.featured_image_id == image.id else '☆' }}
+      </button>
+    </div>
+  </div>
+  <div class="image-info">
+    <div class="title-display" id="title-display-{{ image.id }}">{{ image.title or image.original_name }}</div>
+    <div class="title-edit" id="title-edit-{{ image.id }}" style="display: none;">
+      <input type="text" id="title-input-{{ image.id }}" value="{{ image.title or image.original_name }}" placeholder="Image title">
+      <textarea id="desc-input-{{ image.id }}" placeholder="Description">{{ image.description }}</textarea>
+      
+     
+      <div class="camera-info">
+        <label>Camera Type: <input type="text" id="camera-input-{{ image.id }}" value="{{ image.camera_type }}" placeholder="Camera Type"></label><br>
+        <label>Lens: <input type="text" id="lens-input-{{ image.id }}" value="{{ image.lens }}" placeholder="Lens"></label><br>
+        <label>Settings: <input type="text" id="settings-input-{{ image.id }}" value="{{ image.settings }}" placeholder="Settings"></label><br>
+      </div>
+      
+      <div class="edit-buttons">
+        <button class="save-edit" data-id="{{ image.id }}">Save</button>
+        <button class="cancel-edit" data-id="{{ image.id }}">Cancel</button>
+      </div>
+    </div>
+    {% if image.description %}
+      <div class="description" id="desc-display-{{ image.id }}">{{ image.description }}</div>
+    {% endif %}
+    
+    {% if image.exif %}
+      <div class="exif-section">
+        <button class="exif-toggle" data-id="{{ image.id }}">📊 EXIF Data</button>
+        <div class="exif-data" id="exif-data-{{ image.id }}" style="display: none;">
+          <div class="exif-content">
+            {% set exif_dict = image.exif | from_json %}
+            {% if exif_dict %}
+              {% if exif_dict.get('Image Make') or exif_dict.get('Image Model') %}
+                <div class="exif-item">
+                  <span class="exif-key">Camera:</span>
+                  <span class="exif-value">{{ exif_dict.get('Image Make', '') }} {{ exif_dict.get('Image Model', '') }}</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF DateTimeOriginal') %}
+                <div class="exif-item">
+                  <span class="exif-key">Date Taken:</span>
+                  <span class="exif-value">{{ exif_dict.get('EXIF DateTimeOriginal') }}</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF ExposureTime') %}
+                <div class="exif-item">
+                  <span class="exif-key">Shutter Speed:</span>
+                  <span class="exif-value">{{ exif_dict.get('EXIF ExposureTime') }}s</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF FNumber') %}
+                <div class="exif-item">
+                  <span class="exif-key">Aperture:</span>
+                  <span class="exif-value">f/{{ exif_dict.get('EXIF FNumber') }}</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF ISOSpeedRatings') %}
+                <div class="exif-item">
+                  <span class="exif-key">ISO:</span>
+                  <span class="exif-value">{{ exif_dict.get('EXIF ISOSpeedRatings') }}</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF FocalLength') %}
+                <div class="exif-item">
+                  <span class="exif-key">Focal Length:</span>
+                  <span class="exif-value">{{ exif_dict.get('EXIF FocalLength') }}mm</span>
+                </div>
+              {% endif %}
+              {% if exif_dict.get('EXIF LensMake') or exif_dict.get('EXIF LensModel') %}
+                <div class="exif-item">
+                  <span class="exif-key">Lens:</span>
+                  <span class="exif-value">{{ exif_dict.get('EXIF LensMake', '') }} {{ exif_dict.get('EXIF LensModel', '') }}</span>
+                </div>
+              {% endif %}
+              {% if not (exif_dict.get('Image Make') or exif_dict.get('Image Model') or exif_dict.get('EXIF DateTimeOriginal') or exif_dict.get('EXIF ExposureTime') or exif_dict.get('EXIF FNumber') or exif_dict.get('EXIF ISOSpeedRatings') or exif_dict.get('EXIF FocalLength') or exif_dict.get('EXIF LensMake') or exif_dict.get('EXIF LensModel')) %}
+                <p>No relevant EXIF data available</p>
+              {% endif %}
+            {% else %}
+              <p>No EXIF data available</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row" style="margin-top:.5rem">
+    <button
+      class="toggle-enabled"
+      data-id="{{ image.id }}"
+      aria-pressed="{{ 'true' if image.enabled else 'false' }}">
+      {{ 'Disable' if image.enabled else 'Enable' }}
+    </button>
+    <button class="edit-image" data-id="{{ image.id }}">✏️</button>
+    <button class="delete-image" data-id="{{ image.id }}">🗑️</button>
+  </div>
+</div>
