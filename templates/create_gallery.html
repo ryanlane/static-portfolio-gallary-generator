@@ -1,11 +1,151 @@
 {% extends "base.html" %}
-{% block title %}Create Gallery{% endblock %}
+{% block title %}Create New Gallery{% endblock %}
 {% block content %}
-    <h1>Create Gallery</h1>
-    <form method="post">
-        <label>Title: <input type="text" name="title"></label><br>
-        <label>Description: <textarea name="description"></textarea></label><br>
-        <button type="submit">Create</button>
-    </form>
-    <a href="/">Back to Galleries</a>
+<div class="container">
+    <div class="create-gallery-page">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <h1>📸 Create New Gallery</h1>
+                <p>Start organizing your photos by creating a new gallery</p>
+            </div>
+            <div class="header-visual">
+                <div class="gallery-icon">🖼️</div>
+            </div>
+        </div>
+
+        <!-- Create Form -->
+        <div class="form-container">
+            <form method="post" class="create-form">
+                <div class="form-section">
+                    <h2>Gallery Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="title">Gallery Title *</label>
+                        <input type="text" 
+                               id="title" 
+                               name="title" 
+                               required 
+                               placeholder="Enter a descriptive title for your gallery"
+                               autocomplete="off">
+                        
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Gallery Description</label>
+                        <textarea id="description" 
+                                  name="description" 
+                                  rows="4" 
+                                  placeholder="Describe what this gallery is about (optional)"></textarea>
+                        
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a href="/" class="btn btn-secondary">
+                        <span class="icon">←</span>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="icon">✨</span>
+                        Create Gallery
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Next Steps Preview -->
+        <div class="next-steps">
+            <h3>🚀 What's Next?</h3>
+            <div class="steps-preview">
+                <div class="step-preview">
+                    <div class="step-icon">📷</div>
+                    <div class="step-text">
+                        <strong>Upload Images</strong>
+                        <p>Add your photos with drag & drop</p>
+                    </div>
+                </div>
+                <div class="step-preview">
+                    <div class="step-icon">🎨</div>
+                    <div class="step-text">
+                        <strong>Organize & Edit</strong>
+                        <p>Set titles, descriptions, and featured images</p>
+                    </div>
+                </div>
+                <div class="step-preview">
+                    <div class="step-icon">🌐</div>
+                    <div class="step-text">
+                        <strong>Generate Site</strong>
+                        <p>Create a beautiful static website</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="tips-section">
+            <h3>💡 Gallery Tips</h3>
+            <div class="tips-grid">
+                <div class="tip-card">
+                    <div class="tip-icon">🏷️</div>
+                    <div class="tip-content">
+                        <h4>Descriptive Titles</h4>
+                        <p>Use specific titles like "Summer 2024 Vacation" instead of just "Photos"</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">📅</div>
+                    <div class="tip-content">
+                        <h4>Date & Location</h4>
+                        <p>Include when and where photos were taken in the description</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">🗂️</div>
+                    <div class="tip-content">
+                        <h4>Organize by Theme</h4>
+                        <p>Group related photos together by event, location, or subject</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-focus the title field when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('title').focus();
+});
+
+// Form validation and enhancement
+document.querySelector('.create-form').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    
+    if (!title) {
+        e.preventDefault();
+        alert('Please enter a gallery title');
+        document.getElementById('title').focus();
+        return;
+    }
+    
+    // Visual feedback
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<span class="icon">⏳</span> Creating Gallery...';
+    submitBtn.disabled = true;
+});
+
+// Real-time character count for description
+const descriptionField = document.getElementById('description');
+if (descriptionField) {
+    descriptionField.addEventListener('input', function() {
+        const length = this.value.length;
+        if (length > 500) {
+            this.style.borderColor = '#e74c3c';
+        } else {
+            this.style.borderColor = '';
+        }
+    });
+}
+</script>
 {% endblock %}
