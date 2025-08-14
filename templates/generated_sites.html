@@ -1,35 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Generated Sites{% endblock %}
+{% block title %}Portfolio Sites{% endblock %}
 
 {% block content %}
 <div class="sites-header">
     <div class="sites-title">
-        <h1>🌐 Generated Sites</h1>
-        <p>Manage all your generated static portfolio sites</p>
+        <h1>🌐 Portfolio Sites</h1>
+        <p>Create, manage, and download your static portfolio websites</p>
     </div>
     
     <div class="sites-stats">
         <div class="stat-item">
             <span class="stat-number">{{ total_sites }}</span>
-            <span class="stat-label">Total Sites</span>
+            <span class="stat-label">Published Sites</span>
         </div>
         <div class="stat-item">
             <span class="stat-number">{{ total_size }}</span>
-            <span class="stat-label">Storage Used</span>
+            <span class="stat-label">Total Size</span>
         </div>
     </div>
 </div>
 
 <div class="sites-actions">
     <a href="/generate" class="btn btn-primary">
-        <i class="icon">➕</i>
-        Generate New Site
+        <i class="icon">🚀</i>
+        Create New Portfolio
     </a>
     
     <form method="post" action="/generated-sites/cleanup" style="display: inline;">
         <button type="button" class="btn btn-secondary" onclick="showCleanupConfirmation()">
             <i class="icon">🧹</i>
-            Cleanup Files
+            Clean Up Files
         </button>
     </form>
 </div>
@@ -110,11 +110,11 @@
 {% else %}
 <div class="empty-state">
     <div class="empty-icon">📦</div>
-    <h3>No Generated Sites</h3>
-    <p>You haven't generated any static sites yet. Create some galleries and generate your first portfolio site!</p>
+    <h3>No Portfolio Sites Yet</h3>
+    <p>You haven't created any portfolio websites yet. Start by building some galleries, then create your first beautiful portfolio site!</p>
     <a href="/generate" class="btn btn-primary">
-        <i class="icon">➕</i>
-        Generate Your First Site
+        <i class="icon">🚀</i>
+        Create Your First Portfolio
     </a>
 </div>
 {% endif %}
@@ -196,43 +196,6 @@ function showCleanupConfirmation() {
         }
     }
 }
-
-// Test function to verify modal system
-function testModal() {
-    console.log('Testing modal system...');
-    if (typeof ModalSystem !== 'undefined') {
-        ModalSystem.show({
-            title: 'Test Modal',
-            body: '<p>Modal system is working!</p>',
-            confirmText: 'OK',
-            showCancel: false
-        });
-    } else {
-        alert('Modal system not loaded');
-    }
-}
-
-// Check when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, checking modal system...');
-    console.log('ModalSystem:', typeof ModalSystem);
-    console.log('showDeleteDialog:', typeof showDeleteDialog);
-    
-    // Add test button temporarily
-    const testBtn = document.createElement('button');
-    testBtn.textContent = 'Test Modal';
-    testBtn.onclick = testModal;
-    testBtn.style.position = 'fixed';
-    testBtn.style.top = '10px';
-    testBtn.style.right = '10px';
-    testBtn.style.zIndex = '9999';
-    testBtn.style.background = '#007bff';
-    testBtn.style.color = 'white';
-    testBtn.style.border = 'none';
-    testBtn.style.padding = '10px';
-    testBtn.style.borderRadius = '5px';
-    document.body.appendChild(testBtn);
-});
 </script>
 
 {% endblock %}

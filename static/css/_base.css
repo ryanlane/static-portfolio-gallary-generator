@@ -1,17 +1,41 @@
 /* Base styles and resets */
 :root {
     color-scheme: light dark;
-    --primary-color: #3498db;
-    --primary-hover: #2980b9;
-    --primary-light: rgba(52, 152, 219, 0.1);
-    --accent-color: #f39c12;
-    --background-dark: #111;
-    --text-color: #eee;
-    --text-light: #aaa;
-    --bg-light: #222;
-    --card-bg: rgba(255, 255, 255, 0.1);
-    --border-color: #444;
-    --warn-bg: rgba(255, 0, 0, 0.2);
+    
+    /* Primary Colors */
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --primary-light: rgba(59, 130, 246, 0.15);
+    
+    /* Accent Colors */
+    --accent-color: #f59e0b;
+    --accent-hover: #d97706;
+    
+    /* Background Colors */
+    --background-dark: #0f172a;
+    --bg-light: #1e293b;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    
+    /* Text Colors */
+    --text-color: #f1f5f9;
+    --text-light: #cbd5e1;
+    --text-muted: #64748b;
+    
+    /* Border Colors */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-light: rgba(255, 255, 255, 0.05);
+    
+    /* Status Colors */
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+    
+    /* Alert Backgrounds */
+    --success-bg: rgba(16, 185, 129, 0.1);
+    --error-bg: rgba(239, 68, 68, 0.1);
+    --warn-bg: rgba(245, 158, 11, 0.1);
+    --info-bg: rgba(59, 130, 246, 0.1);
 }
 
 body {

@@ -81,6 +81,49 @@ def startup():
             gallery_ids TEXT
         )''')
         
+        # Create app_settings table
+        c.execute('''CREATE TABLE IF NOT EXISTS app_settings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            setting_key TEXT UNIQUE,
+            setting_value TEXT,
+            setting_type TEXT DEFAULT 'string',
+            category TEXT,
+            description TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )''')
+        
+        # Insert default settings if they don't exist
+        default_settings = [
+            # Storage & File Management
+            ('storage_cleanup_threshold_gb', '10', 'integer', 'storage', 'Auto-cleanup when storage exceeds this size (GB)'),
+            ('image_quality_compression', '85', 'integer', 'storage', 'Default JPEG compression quality (1-100)'),
+            ('thumbnail_size_px', '300', 'integer', 'storage', 'Thumbnail size in pixels'),
+            ('file_retention_days', '365', 'integer', 'storage', 'Auto-delete old generated sites after this many days (0 = never)'),
+            
+            # Image Processing
+            ('auto_resize_enabled', 'true', 'boolean', 'image_processing', 'Automatically resize large uploaded images'),
+            ('max_image_width', '2048', 'integer', 'image_processing', 'Maximum width for uploaded images (pixels)'),
+            ('max_image_height', '2048', 'integer', 'image_processing', 'Maximum height for uploaded images (pixels)'),
+            ('strip_exif_data', 'false', 'boolean', 'image_processing', 'Remove EXIF metadata from uploaded images'),
+            ('convert_heic_to_jpeg', 'true', 'boolean', 'image_processing', 'Convert HEIC files to JPEG format'),
+            ('auto_featured_image', 'true', 'boolean', 'image_processing', 'Automatically set first image as gallery featured image'),
+            
+            # Portfolio Generation
+            ('default_analytics_code', '', 'text', 'portfolio', 'Default Google Analytics tracking code'),
+            ('default_meta_description', 'A beautiful portfolio showcasing my photography work', 'text', 'portfolio', 'Default meta description for portfolios'),
+            ('include_social_meta', 'true', 'boolean', 'portfolio', 'Include Open Graph meta tags for social sharing'),
+            ('watermark_enabled', 'false', 'boolean', 'portfolio', 'Add watermark to portfolio images'),
+            ('watermark_text', '', 'text', 'portfolio', 'Watermark text to overlay on images'),
+            ('watermark_opacity', '30', 'integer', 'portfolio', 'Watermark opacity percentage (1-100)')
+        ]
+        
+        for setting_key, default_value, setting_type, category, description in default_settings:
+            c.execute('''INSERT OR IGNORE INTO app_settings 
+                        (setting_key, setting_value, setting_type, category, description) 
+                        VALUES (?, ?, ?, ?, ?)''', 
+                     (setting_key, default_value, setting_type, category, description))
+        
         # Add sort_order column if it doesn't exist (for existing databases)
         try:
             c.execute('ALTER TABLE images ADD COLUMN sort_order INTEGER DEFAULT 0')
@@ -713,9 +756,132 @@ def delete_image(image_id: int):
         return {"success": False}
 
 # Settings page
+def get_setting(key: str, default=None):
+    """Get a setting value from the database"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('SELECT setting_value, setting_type FROM app_settings WHERE setting_key = ?', (key,))
+        result = c.fetchone()
+        conn.close()
+        
+        if result:
+            value, setting_type = result
+            # Convert based on type
+            if setting_type == 'boolean':
+                return value.lower() == 'true'
+            elif setting_type == 'integer':
+                return int(value)
+            elif setting_type == 'float':
+                return float(value)
+            else:
+                return value
+        return default
+    except:
+        return default
+
+def set_setting(key: str, value, setting_type: str = 'string'):
+    """Set a setting value in the database"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        # Convert value to string for storage
+        str_value = str(value).lower() if setting_type == 'boolean' else str(value)
+        c.execute('''UPDATE app_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE setting_key = ?''', (str_value, key))
+        conn.commit()
+        conn.close()
+        return True
+    except:
+        return False
+
+def get_all_settings():
+    """Get all settings organized by category"""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        c.execute('''SELECT setting_key, setting_value, setting_type, category, description 
+                    FROM app_settings ORDER BY category, setting_key''')
+        results = c.fetchall()
+        conn.close()
+        
+        settings = {}
+        for setting_key, setting_value, setting_type, category, description in results:
+            if category not in settings:
+                settings[category] = {}
+            
+            # Convert value based on type
+            if setting_type == 'boolean':
+                value = setting_value.lower() == 'true'
+            elif setting_type == 'integer':
+                value = int(setting_value)
+            elif setting_type == 'float':
+                value = float(setting_value)
+            else:
+                value = setting_value
+                
+            settings[category][setting_key] = {
+                'value': value,
+                'type': setting_type,
+                'description': description
+            }
+        
+        return settings
+    except Exception as e:
+        print(f"Error getting settings: {e}")
+        return {}
+
 @app.get('/settings', response_class=HTMLResponse)
 def settings(request: Request, message: str = None):
-    return templates.TemplateResponse('settings.html', {'request': request, 'message': message})
+    settings_data = get_all_settings()
+    return templates.TemplateResponse('settings.html', {
+        'request': request, 
+        'message': message,
+        'settings': settings_data
+    })
+
+@app.post('/settings/update', response_class=HTMLResponse)
+def update_settings(request: Request):
+    """Update settings from form submission"""
+    try:
+        # Get form data
+        form_data = {}
+        body = request._body
+        if body:
+            form_string = body.decode('utf-8')
+            for pair in form_string.split('&'):
+                if '=' in pair:
+                    key, value = pair.split('=', 1)
+                    # URL decode
+                    import urllib.parse
+                    key = urllib.parse.unquote_plus(key)
+                    value = urllib.parse.unquote_plus(value)
+                    form_data[key] = value
+        
+        # Get current settings to know types
+        current_settings = get_all_settings()
+        
+        # Update each setting
+        for category_settings in current_settings.values():
+            for setting_key, setting_info in category_settings.items():
+                if setting_key in form_data:
+                    setting_type = setting_info['type']
+                    new_value = form_data[setting_key]
+                    
+                    # Handle boolean checkboxes (unchecked boxes don't appear in form data)
+                    if setting_type == 'boolean':
+                        new_value = 'true'
+                    
+                    set_setting(setting_key, new_value, setting_type)
+                elif setting_info['type'] == 'boolean':
+                    # Boolean setting not in form data means it was unchecked
+                    set_setting(setting_key, 'false', 'boolean')
+        
+        return RedirectResponse('/settings?message=Settings+updated+successfully', status_code=303)
+        
+    except Exception as e:
+        print(f"Error updating settings: {e}")
+        return RedirectResponse('/settings?error=Failed+to+update+settings', status_code=303)
 
 # Reset database and static/gallery folders
 @app.post('/settings/reset', response_class=HTMLResponse)

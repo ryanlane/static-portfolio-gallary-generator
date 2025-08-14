@@ -1,20 +1,134 @@
 {% extends "base.html" %}
 {% block title %}Settings{% endblock %}
 {% block content %}
-<h1>Settings</h1>
 
-<div class="settings-section">
-    <h2>Database Management</h2>
-    <p>Manage your image database and galleries.</p>
-    
-    <div class="danger-zone">
-        <h3>⚠️ Danger Zone</h3>
-        <p>These actions cannot be undone. Please proceed with caution.</p>
+<div class="settings-container">
+    <div class="page-header">
+        <h1>⚙️ Settings</h1>
+        <p>Configure your portfolio generator preferences and system settings</p>
+    </div>
+
+    {% if settings %}
+    <form method="post" action="/settings/update" class="settings-form">
         
-        <button type="button" onclick="showResetConfirmation()" class="btn btn-danger">
-            <i class="icon">🗑️</i>
-            Reset Image Database
-        </button>
+        <!-- Storage & File Management -->
+        {% if 'storage' in settings %}
+        <div class="section">
+            <h2>📂 Storage & File Management</h2>
+            <p>Configure how files are stored, processed, and managed</p>
+            
+            <div class="settings-grid">
+                {% for key, setting in settings.storage.items() %}
+                <div class="setting-item">
+                    <label for="{{ key }}">{{ setting.description }}</label>
+                    {% if setting.type == 'boolean' %}
+                        <div class="toggle-wrapper">
+                            <input type="checkbox" id="{{ key }}" name="{{ key }}" 
+                                   {% if setting.value %}checked{% endif %} class="toggle-input">
+                            <label for="{{ key }}" class="toggle-label"></label>
+                        </div>
+                    {% elif setting.type == 'integer' %}
+                        <input type="number" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" min="0" class="form-control">
+                    {% else %}
+                        <input type="text" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" class="form-control">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Image Processing -->
+        {% if 'image_processing' in settings %}
+        <div class="section">
+            <h2>🖼️ Image Processing</h2>
+            <p>Control how images are processed and optimized</p>
+            
+            <div class="settings-grid">
+                {% for key, setting in settings.image_processing.items() %}
+                <div class="setting-item">
+                    <label for="{{ key }}">{{ setting.description }}</label>
+                    {% if setting.type == 'boolean' %}
+                        <div class="toggle-wrapper">
+                            <input type="checkbox" id="{{ key }}" name="{{ key }}" 
+                                   {% if setting.value %}checked{% endif %} class="toggle-input">
+                            <label for="{{ key }}" class="toggle-label"></label>
+                        </div>
+                    {% elif setting.type == 'integer' %}
+                        <input type="number" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" min="0" class="form-control">
+                    {% else %}
+                        <input type="text" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" class="form-control">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Portfolio Generation -->
+        {% if 'portfolio' in settings %}
+        <div class="section">
+            <h2>🌐 Portfolio Generation</h2>
+            <p>Configure default settings for generated portfolio websites</p>
+            
+            <div class="settings-grid">
+                {% for key, setting in settings.portfolio.items() %}
+                <div class="setting-item">
+                    <label for="{{ key }}">{{ setting.description }}</label>
+                    {% if setting.type == 'boolean' %}
+                        <div class="toggle-wrapper">
+                            <input type="checkbox" id="{{ key }}" name="{{ key }}" 
+                                   {% if setting.value %}checked{% endif %} class="toggle-input">
+                            <label for="{{ key }}" class="toggle-label"></label>
+                        </div>
+                    {% elif setting.type == 'integer' %}
+                        <input type="number" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" min="0" max="100" class="form-control">
+                    {% elif setting.type == 'text' %}
+                        <textarea id="{{ key }}" name="{{ key }}" rows="3" 
+                                  class="form-control">{{ setting.value }}</textarea>
+                    {% else %}
+                        <input type="text" id="{{ key }}" name="{{ key }}" 
+                               value="{{ setting.value }}" class="form-control">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Save Button -->
+        <div class="btn-group">
+            <button type="reset" class="btn btn-secondary">
+                <i class="icon">↺</i>
+                Reset Form
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="icon">💾</i>
+                Save Settings
+            </button>
+        </div>
+    </form>
+    {% endif %}
+
+    <!-- Database Management -->
+    <div class="section">
+        <h2>🗄️ Database Management</h2>
+        <p>Manage your image database and galleries.</p>
+        
+        <div class="danger-zone">
+            <h3>⚠️ Danger Zone</h3>
+            <p>These actions cannot be undone. Please proceed with caution.</p>
+            
+            <button type="button" onclick="showResetConfirmation()" class="btn btn-danger">
+                <i class="icon">🗑️</i>
+                Reset Image Database
+            </button>
+        </div>
     </div>
 </div>
 

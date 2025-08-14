@@ -3,10 +3,12 @@
 {% block content %}
 <div class="container">
     <!-- Hero Section -->
-    <div class="dashboard-hero">
+    <div class="page-header">
         <h1>📸 Gallery Dashboard</h1>
         <p>Manage your photo galleries and generate beautiful static sites</p>
-        
+    </div>
+    
+    <div class="section">
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-number">{{ total_galleries }}</div>
@@ -28,9 +30,9 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="dashboard-section">
+    <div class="section">
         <h2>🚀 Quick Actions</h2>
-        <div class="action-grid">
+        <div class="grid grid-2">
             <a href="/create-gallery" class="action-card primary">
                 <div class="action-icon">➕</div>
                 <div class="action-content">
@@ -69,9 +71,9 @@
 
     <!-- Generated Sites -->
     {% if generated_sites %}
-    <div class="dashboard-section">
+    <div class="section">
         <h2>🌐 Generated Sites</h2>
-        <div class="sites-grid">
+        <div class="grid grid-3">
             {% for site in generated_sites %}
             <div class="site-card">
                 <div class="site-info">
@@ -90,7 +92,7 @@
             </div>
             {% endfor %}
         </div>
-        <div class="section-footer">
+        <div class="btn-group">
             <a href="/generated-sites" class="btn btn-secondary">
                 <span class="icon">🌐</span>
                 View All Sites
@@ -104,10 +106,10 @@
     {% endif %}
 
     <!-- Recent Activity -->
-    <div class="dashboard-grid">
+    <div class="grid grid-2">
         <!-- Recent Galleries -->
         {% if recent_galleries %}
-        <div class="dashboard-section">
+        <div class="section">
             <h2>📁 Recent Galleries</h2>
             <div class="recent-list">
                 {% for gallery in recent_galleries %}
@@ -123,7 +125,7 @@
                 </div>
                 {% endfor %}
             </div>
-            <div class="section-footer">
+            <div class="btn-group">
                 <a href="/galleries" class="btn btn-secondary">View All Galleries</a>
             </div>
         </div>
@@ -131,7 +133,7 @@
 
         <!-- Recent Images -->
         {% if recent_images %}
-        <div class="dashboard-section">
+        <div class="section">
             <h2>🖼️ Recent Uploads</h2>
             <div class="recent-images">
                 {% for image in recent_images %}
@@ -152,9 +154,9 @@
 
     <!-- Getting Started -->
     {% if total_galleries == 0 %}
-    <div class="dashboard-section getting-started">
+    <div class="section">
         <h2>🎯 Getting Started</h2>
-        <div class="steps-grid">
+        <div class="grid grid-3">
             <div class="step-card">
                 <div class="step-number">1</div>
                 <div class="step-content">
