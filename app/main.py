@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 import sqlite3
 import os
 import shutil
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 import exifread
 import json
 import io
@@ -115,7 +115,11 @@ def startup():
             ('include_social_meta', 'true', 'boolean', 'portfolio', 'Include Open Graph meta tags for social sharing'),
             ('watermark_enabled', 'false', 'boolean', 'portfolio', 'Add watermark to portfolio images'),
             ('watermark_text', '', 'text', 'portfolio', 'Watermark text to overlay on images'),
-            ('watermark_opacity', '30', 'integer', 'portfolio', 'Watermark opacity percentage (1-100)')
+            ('watermark_opacity', '30', 'integer', 'portfolio', 'Watermark opacity percentage (1-100)'),
+            ('watermark_font_size', '24', 'integer', 'portfolio', 'Watermark font size in pixels'),
+            ('watermark_font_family', 'Roboto', 'text', 'portfolio', 'Google Font family for watermark text'),
+            ('watermark_position_vertical', 'bottom', 'text', 'portfolio', 'Watermark vertical position (top/bottom)'),
+            ('watermark_position_horizontal', 'right', 'text', 'portfolio', 'Watermark horizontal position (left/center/right)')
         ]
         
         for setting_key, default_value, setting_type, category, description in default_settings:
@@ -147,6 +151,185 @@ def startup():
             open(DB_PATH, 'a').close()
             print("🔄 Created empty database file, retrying...")
             startup()  # Retry once
+
+def apply_watermark_to_image(src_path, dest_path, watermark_config):
+    """Apply watermark to an image"""
+    try:
+        # Validate inputs
+        if not watermark_config:
+            print("Warning: No watermark config provided, copying original image")
+            shutil.copy2(src_path, dest_path)
+            return False
+            
+        if not os.path.exists(src_path):
+            print(f"Warning: Source image not found: {src_path}")
+            return False
+        
+        # Open the source image
+        with Image.open(src_path) as img:
+            # Convert to RGB if necessary (for PNG with transparency)
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Create a copy to work with
+            watermarked = img.copy()
+            
+            # Create a drawing context
+            draw = ImageDraw.Draw(watermarked)
+            
+            # Get watermark settings
+            text = watermark_config.get('text', '© Your Name')
+            font_family = watermark_config.get('font_family', 'arial')
+            font_size = int(watermark_config.get('font_size', 16))
+            opacity = int(watermark_config.get('opacity', 30))
+            position_vertical = watermark_config.get('position_vertical', 'bottom')
+            position_horizontal = watermark_config.get('position_horizontal', 'right')
+            
+            # Calculate font size - use the setting directly without scaling
+            # This maintains consistent DPI/physical size across all images
+            font_size = int(watermark_config.get('font_size', 16))
+            
+            # Optional: Add a minimum size constraint for very small images
+            img_width, img_height = watermarked.size
+            min_dimension = min(img_width, img_height)
+            
+            # Only scale down if the image is very small (less than 200px in any dimension)
+            # to ensure watermark remains readable on tiny images
+            if min_dimension < 200:
+                scale_factor = min_dimension / 200
+                scaled_font_size = max(8, int(font_size * scale_factor))
+            else:
+                scaled_font_size = font_size
+            
+            # Try to load a system font, fallback to default
+            font = None
+            try:
+                # Try common system font paths
+                font_paths = [
+                    f"C:/Windows/Fonts/{font_family.lower().replace(' ', '')}.ttf",
+                    f"C:/Windows/Fonts/{font_family.lower()}.ttf",
+                    "C:/Windows/Fonts/arial.ttf",
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                    "/System/Library/Fonts/Arial.ttf"
+                ]
+                
+                for font_path in font_paths:
+                    if os.path.exists(font_path):
+                        font = ImageFont.truetype(font_path, scaled_font_size)
+                        break
+                        
+                if font is None:
+                    font = ImageFont.load_default()
+                    
+            except Exception:
+                font = ImageFont.load_default()
+            
+            # Get text size
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = bbox[2] - bbox[0]
+            text_height = bbox[3] - bbox[1]
+            
+            # Calculate padding (2% of image width/height)
+            padding_x = int(img_width * 0.02)
+            padding_y = int(img_height * 0.02)
+            
+            # Calculate position
+            if position_horizontal == 'left':
+                x = padding_x
+            elif position_horizontal == 'center':
+                x = (img_width - text_width) // 2
+            else:  # right
+                x = img_width - text_width - padding_x
+                
+            if position_vertical == 'top':
+                y = padding_y
+            else:  # bottom
+                y = img_height - text_height - padding_y
+            
+            # Create a semi-transparent overlay for the text background
+            overlay = Image.new('RGBA', watermarked.size, (0, 0, 0, 0))
+            overlay_draw = ImageDraw.Draw(overlay)
+            
+            # Draw background rectangle with some padding
+            bg_padding = 4
+            bg_opacity = int(opacity * 2.55 * 0.7)  # 70% of text opacity for background
+            overlay_draw.rectangle([
+                x - bg_padding, y - bg_padding, 
+                x + text_width + bg_padding, y + text_height + bg_padding
+            ], fill=(0, 0, 0, bg_opacity))
+            
+            # Draw the text on the overlay
+            text_opacity = int(opacity * 2.55)  # Convert percentage to 0-255
+            overlay_draw.text((x, y), text, font=font, fill=(255, 255, 255, text_opacity))
+            
+            # Composite the overlay onto the image
+            watermarked = Image.alpha_composite(watermarked.convert('RGBA'), overlay)
+            
+            # Convert back to RGB for saving as JPEG
+            watermarked = watermarked.convert('RGB')
+            
+            # Save the watermarked image
+            watermarked.save(dest_path, 'JPEG', quality=95, optimize=True)
+            
+            return True
+            
+    except Exception as e:
+        print(f"Error applying watermark to {src_path}: {e}")
+        # Fallback: just copy the original image
+        shutil.copy2(src_path, dest_path)
+        return False
+
+def get_watermark_config():
+    """Get current watermark configuration from settings"""
+    default_config = get_default_watermark_config()
+    
+    try:
+        conn = get_db()
+        if not conn:
+            print("Error: Could not connect to database, using defaults")
+            return default_config
+            
+        c = conn.cursor()
+        
+        # Get watermark settings
+        watermark_settings = {}
+        settings = c.execute('''
+            SELECT setting_key, setting_value 
+            FROM app_settings 
+            WHERE setting_key LIKE 'watermark_%'
+        ''').fetchall()
+        
+        for setting in settings:
+            key = setting['setting_key'].replace('watermark_', '')
+            watermark_settings[key] = setting['setting_value']
+        
+        conn.close()
+        
+        # If no settings found, return defaults
+        if not watermark_settings:
+            print("No watermark settings found in database, using defaults")
+            return default_config
+        
+        # Merge with defaults to ensure all keys exist
+        merged_config = default_config.copy()
+        merged_config.update(watermark_settings)
+        return merged_config
+        
+    except Exception as e:
+        print(f"Error getting watermark config: {e}")
+        return default_config
+
+def get_default_watermark_config():
+    """Get default watermark configuration"""
+    return {
+        'enabled': 'false',
+        'text': '© Your Name',
+        'font_family': 'arial',
+        'font_size': '16',
+        'opacity': '30',
+        'position_vertical': 'bottom',
+        'position_horizontal': 'right'
+    }
 
 @app.get('/', response_class=HTMLResponse)
 def dashboard(request: Request, skip_welcome: bool = False):
@@ -841,22 +1024,14 @@ def settings(request: Request, message: str = None):
     })
 
 @app.post('/settings/update', response_class=HTMLResponse)
-def update_settings(request: Request):
+async def update_settings(request: Request):
     """Update settings from form submission"""
     try:
-        # Get form data
-        form_data = {}
-        body = request._body
-        if body:
-            form_string = body.decode('utf-8')
-            for pair in form_string.split('&'):
-                if '=' in pair:
-                    key, value = pair.split('=', 1)
-                    # URL decode
-                    import urllib.parse
-                    key = urllib.parse.unquote_plus(key)
-                    value = urllib.parse.unquote_plus(value)
-                    form_data[key] = value
+        # Get form data properly using FastAPI
+        form = await request.form()
+        form_data = dict(form)
+        
+        print(f"Received form data: {form_data}")  # Debug output
         
         # Get current settings to know types
         current_settings = get_all_settings()
@@ -872,16 +1047,61 @@ def update_settings(request: Request):
                     if setting_type == 'boolean':
                         new_value = 'true'
                     
-                    set_setting(setting_key, new_value, setting_type)
+                    print(f"Updating {setting_key} = {new_value} (type: {setting_type})")
+                    success = set_setting(setting_key, new_value, setting_type)
+                    if not success:
+                        print(f"Failed to update setting: {setting_key}")
+                        
                 elif setting_info['type'] == 'boolean':
                     # Boolean setting not in form data means it was unchecked
+                    print(f"Setting {setting_key} to false (unchecked)")
                     set_setting(setting_key, 'false', 'boolean')
         
         return RedirectResponse('/settings?message=Settings+updated+successfully', status_code=303)
         
     except Exception as e:
         print(f"Error updating settings: {e}")
+        import traceback
+        traceback.print_exc()
         return RedirectResponse('/settings?error=Failed+to+update+settings', status_code=303)
+
+@app.get('/api/sample-images')
+def get_sample_images():
+    """Get sample images from user's gallery for watermark preview"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Get up to 3 random enabled images from all galleries
+        images = cur.execute('''
+            SELECT i.filename, g.id as gallery_id
+            FROM images i
+            JOIN galleries g ON i.gallery_id = g.id
+            WHERE i.enabled = 1
+            ORDER BY RANDOM()
+            LIMIT 3
+        ''').fetchall()
+        
+        conn.close()
+        
+        sample_images = []
+        for img in images:
+            # Use thumbnail for preview (smaller file size)
+            thumb_url = f'/static/thumbs/{img["filename"]}'
+            full_url = f'/static/gallery_{img["gallery_id"]}/{img["filename"]}'
+            
+            sample_images.append({
+                'url': thumb_url,
+                'full_url': full_url,
+                'alt': f'Sample from gallery {img["gallery_id"]}'
+            })
+        
+        return {"images": sample_images}
+        
+    except Exception as e:
+        print(f"Error getting sample images: {e}")
+        # Return empty list if no images found or error occurs
+        return {"images": []}
 
 # Reset database and static/gallery folders
 @app.post('/settings/reset', response_class=HTMLResponse)
@@ -990,12 +1210,43 @@ def generate_static_site(
             images_dir = os.path.join(temp_dir, 'images')
             os.makedirs(images_dir, exist_ok=True)
             
-            # Copy selected images
+            # Get watermark configuration
+            try:
+                watermark_config = get_watermark_config()
+                if watermark_config is None:
+                    watermark_config = get_default_watermark_config()
+                    
+                watermark_enabled = watermark_config.get('enabled', 'false').lower() == 'true'
+                print(f"Watermark config loaded: enabled={watermark_enabled}, text={watermark_config.get('text', 'N/A')}")
+            except Exception as e:
+                print(f"Error loading watermark config: {e}")
+                watermark_config = get_default_watermark_config()
+                watermark_enabled = False
+            
+            # Copy selected images (with watermark if enabled)
             for gallery in galleries:
                 for image in gallery['images']:
                     src_path = os.path.join('static', f'gallery_{gallery["id"]}', image['filename'])
+                    dest_path = os.path.join(images_dir, image['filename'])
+                    
                     if os.path.exists(src_path):
-                        shutil.copy2(src_path, os.path.join(images_dir, image['filename']))
+                        try:
+                            if watermark_enabled and watermark_config and watermark_config.get('text', '').strip():
+                                # Apply watermark
+                                print(f"Applying watermark to {image['filename']}")
+                                success = apply_watermark_to_image(src_path, dest_path, watermark_config)
+                                if not success:
+                                    print(f"Watermark failed for {image['filename']}, using original")
+                            else:
+                                # Just copy without watermark
+                                print(f"Copying {image['filename']} without watermark (enabled={watermark_enabled}, config={watermark_config is not None})")
+                                shutil.copy2(src_path, dest_path)
+                        except Exception as img_error:
+                            print(f"Error processing image {image['filename']}: {img_error}")
+                            # Fallback: copy original
+                            shutil.copy2(src_path, dest_path)
+                    else:
+                        print(f"Warning: Source image not found: {src_path}")
             
             # Load and render template
             theme_template_path = os.path.join('static_templates', theme, 'index.html')

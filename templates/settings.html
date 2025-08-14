@@ -76,7 +76,9 @@
             <p>Configure default settings for generated portfolio websites</p>
             
             <div class="settings-grid">
+                <!-- General Portfolio Settings -->
                 {% for key, setting in settings.portfolio.items() %}
+                {% if not key.startswith('watermark_') %}
                 <div class="setting-item">
                     <label for="{{ key }}">{{ setting.description }}</label>
                     {% if setting.type == 'boolean' %}
@@ -96,7 +98,120 @@
                                value="{{ setting.value }}" class="form-control">
                     {% endif %}
                 </div>
+                {% endif %}
                 {% endfor %}
+            </div>
+
+            <!-- Watermark Settings -->
+            <div class="watermark-section">
+                <h3>🏷️ Watermark Settings</h3>
+                <p>Customize watermark appearance and placement on portfolio images</p>
+                
+                <!-- Watermark Preview -->
+                <div class="watermark-preview-section collapsed">
+                    <h4>📋 Live Preview</h4>
+                    <div class="preview-container">
+                        <div class="preview-controls">
+                            <button type="button" id="prev-sample" class="btn btn-secondary btn-small">← Previous</button>
+                            <span class="preview-label">Sample Image <span id="sample-counter">1/3</span></span>
+                            <button type="button" id="next-sample" class="btn btn-secondary btn-small">Next →</button>
+                        </div>
+                        <div class="preview-image">
+                            <img id="sample-image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23404040;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23808080;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg)'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16' opacity='0.7'%3ESample Photo%3C/text%3E%3C/svg%3E" alt="Sample Photo">
+                            <div class="watermark-overlay" id="watermark-preview">
+                                <span id="watermark-text-preview">© Your Name</span>
+                            </div>
+                        </div>
+                        <p class="preview-note">
+                            <i class="icon">💡</i>
+                            This preview shows how your watermark will appear on portfolio images
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="settings-grid">
+                    <!-- Watermark Enabled -->
+                    {% if 'watermark_enabled' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_enabled">{{ settings.portfolio.watermark_enabled.description }}</label>
+                        <div class="toggle-wrapper">
+                            <input type="checkbox" id="watermark_enabled" name="watermark_enabled" 
+                                   {% if settings.portfolio.watermark_enabled.value %}checked{% endif %} class="toggle-input">
+                            <label for="watermark_enabled" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Watermark Text -->
+                    {% if 'watermark_text' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_text">{{ settings.portfolio.watermark_text.description }}</label>
+                        <input type="text" id="watermark_text" name="watermark_text" 
+                               value="{{ settings.portfolio.watermark_text.value }}" 
+                               placeholder="© Your Name" class="form-control">
+                    </div>
+                    {% endif %}
+
+                    <!-- Font Family -->
+                    {% if 'watermark_font_family' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_font_family">{{ settings.portfolio.watermark_font_family.description }}</label>
+                        <select id="watermark_font_family" name="watermark_font_family" class="form-control">
+                            <option value="Roboto" {% if settings.portfolio.watermark_font_family.value == 'Roboto' %}selected{% endif %}>Roboto (Clean & Modern)</option>
+                            <option value="Open Sans" {% if settings.portfolio.watermark_font_family.value == 'Open Sans' %}selected{% endif %}>Open Sans (Friendly)</option>
+                            <option value="Lato" {% if settings.portfolio.watermark_font_family.value == 'Lato' %}selected{% endif %}>Lato (Professional)</option>
+                            <option value="Montserrat" {% if settings.portfolio.watermark_font_family.value == 'Montserrat' %}selected{% endif %}>Montserrat (Elegant)</option>
+                            <option value="Source Sans Pro" {% if settings.portfolio.watermark_font_family.value == 'Source Sans Pro' %}selected{% endif %}>Source Sans Pro (Technical)</option>
+                            <option value="Poppins" {% if settings.portfolio.watermark_font_family.value == 'Poppins' %}selected{% endif %}>Poppins (Playful)</option>
+                            <option value="Nunito" {% if settings.portfolio.watermark_font_family.value == 'Nunito' %}selected{% endif %}>Nunito (Rounded)</option>
+                            <option value="Inter" {% if settings.portfolio.watermark_font_family.value == 'Inter' %}selected{% endif %}>Inter (UI Optimized)</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Font Size -->
+                    {% if 'watermark_font_size' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_font_size">{{ settings.portfolio.watermark_font_size.description }}</label>
+                        <input type="number" id="watermark_font_size" name="watermark_font_size" 
+                               value="{{ settings.portfolio.watermark_font_size.value }}" 
+                               min="8" max="72" class="form-control">
+                    </div>
+                    {% endif %}
+
+                    <!-- Opacity -->
+                    {% if 'watermark_opacity' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_opacity">{{ settings.portfolio.watermark_opacity.description }}</label>
+                        <input type="number" id="watermark_opacity" name="watermark_opacity" 
+                               value="{{ settings.portfolio.watermark_opacity.value }}" 
+                               min="1" max="100" class="form-control">
+                    </div>
+                    {% endif %}
+
+                    <!-- Vertical Position -->
+                    {% if 'watermark_position_vertical' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_position_vertical">{{ settings.portfolio.watermark_position_vertical.description }}</label>
+                        <select id="watermark_position_vertical" name="watermark_position_vertical" class="form-control">
+                            <option value="top" {% if settings.portfolio.watermark_position_vertical.value == 'top' %}selected{% endif %}>Top</option>
+                            <option value="bottom" {% if settings.portfolio.watermark_position_vertical.value == 'bottom' %}selected{% endif %}>Bottom</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <!-- Horizontal Position -->
+                    {% if 'watermark_position_horizontal' in settings.portfolio %}
+                    <div class="setting-item">
+                        <label for="watermark_position_horizontal">{{ settings.portfolio.watermark_position_horizontal.description }}</label>
+                        <select id="watermark_position_horizontal" name="watermark_position_horizontal" class="form-control">
+                            <option value="left" {% if settings.portfolio.watermark_position_horizontal.value == 'left' %}selected{% endif %}>Left</option>
+                            <option value="center" {% if settings.portfolio.watermark_position_horizontal.value == 'center' %}selected{% endif %}>Center</option>
+                            <option value="right" {% if settings.portfolio.watermark_position_horizontal.value == 'right' %}selected{% endif %}>Right</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endif %}
@@ -143,6 +258,248 @@
 {% endif %}
 
 <script>
+// Watermark settings and live preview functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const watermarkEnabled = document.getElementById('watermark_enabled');
+    const watermarkText = document.getElementById('watermark_text');
+    const watermarkFontFamily = document.getElementById('watermark_font_family');
+    const watermarkFontSize = document.getElementById('watermark_font_size');
+    const watermarkOpacity = document.getElementById('watermark_opacity');
+    const watermarkVertical = document.getElementById('watermark_position_vertical');
+    const watermarkHorizontal = document.getElementById('watermark_position_horizontal');
+    
+    const watermarkSettings = document.querySelectorAll('.watermark-section .setting-item:not(:first-child)');
+    const watermarkPreviewSection = document.querySelector('.watermark-preview-section');
+    const watermarkPreview = document.getElementById('watermark-preview');
+    const watermarkTextPreview = document.getElementById('watermark-text-preview');
+    
+    // Sample images state
+    let userSampleImages = [];
+    let currentSampleIndex = 0;
+    const sampleImage = document.getElementById('sample-image');
+    const sampleCounter = document.getElementById('sample-counter');
+    const prevButton = document.getElementById('prev-sample');
+    const nextButton = document.getElementById('next-sample');
+    
+    // Default gradient images as fallback
+    const defaultImages = [
+        {
+            url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23404040;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23808080;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg1)'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16' opacity='0.7'%3ESample Image 1%3C/text%3E%3C/svg%3E",
+            alt: "Sample Image 1"
+        },
+        {
+            url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23505050;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23707070;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg2)'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16' opacity='0.7'%3ESample Image 2%3C/text%3E%3C/svg%3E",
+            alt: "Sample Image 2"
+        },
+        {
+            url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Cdefs%3E%3ClinearGradient id='bg3' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23606060;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23606060;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='400' height='300' fill='url(%23bg3)'/%3E%3Ctext x='200' y='150' text-anchor='middle' fill='white' font-size='16' opacity='0.7'%3ESample Image 3%3C/text%3E%3C/svg%3E",
+            alt: "Sample Image 3"
+        }
+    ];
+    
+    // Load user images from API
+    async function loadUserImages() {
+        try {
+            const response = await fetch('/api/sample-images');
+            const data = await response.json();
+            
+            if (data.images && data.images.length > 0) {
+                userSampleImages = data.images;
+            } else {
+                // Use default gradients if no user images
+                userSampleImages = defaultImages;
+            }
+        } catch (error) {
+            console.log('Could not load user images, using defaults:', error);
+            userSampleImages = defaultImages;
+        }
+        
+        updateSampleImage();
+    }
+    
+    function updateSampleImage() {
+        if (sampleImage && sampleCounter && userSampleImages.length > 0) {
+            const sample = userSampleImages[currentSampleIndex];
+            sampleImage.src = sample.url;
+            sampleImage.alt = sample.alt;
+            sampleCounter.textContent = `${currentSampleIndex + 1}/${userSampleImages.length}`;
+            
+            // Update watermark size based on image dimensions
+            updateWatermarkSize();
+        }
+    }
+    
+    function updateWatermarkSize() {
+        if (!sampleImage || !watermarkTextPreview) return;
+        
+        // Wait for image to load to get actual dimensions
+        const updateSize = () => {
+            const imgWidth = sampleImage.clientWidth;
+            const imgHeight = sampleImage.clientHeight;
+            const minDimension = Math.min(imgWidth, imgHeight);
+            
+            // Use the actual font size setting without scaling for most images
+            const baseFontSize = parseInt(watermarkFontSize?.value || 16);
+            
+            // Only scale down for very small preview images (less than 200px)
+            let scaledFontSize = baseFontSize;
+            if (minDimension < 200) {
+                const scaleFactor = minDimension / 200;
+                scaledFontSize = Math.max(8, Math.round(baseFontSize * scaleFactor));
+            }
+            
+            watermarkTextPreview.style.fontSize = scaledFontSize + 'px';
+        };
+        
+        if (sampleImage.complete) {
+            updateSize();
+        } else {
+            sampleImage.onload = updateSize;
+        }
+    }
+    
+    if (prevButton && nextButton) {
+        prevButton.addEventListener('click', function() {
+            if (userSampleImages.length > 0) {
+                currentSampleIndex = (currentSampleIndex - 1 + userSampleImages.length) % userSampleImages.length;
+                updateSampleImage();
+            }
+        });
+        
+        nextButton.addEventListener('click', function() {
+            if (userSampleImages.length > 0) {
+                currentSampleIndex = (currentSampleIndex + 1) % userSampleImages.length;
+                updateSampleImage();
+            }
+        });
+    }
+    
+    // Google Fonts mapping
+    const fontFamilies = {
+        'Roboto': 'Roboto',
+        'Open Sans': 'Open Sans',
+        'Lato': 'Lato',
+        'Montserrat': 'Montserrat',
+        'Source Sans Pro': 'Source Sans Pro',
+        'Poppins': 'Poppins',
+        'Nunito': 'Nunito',
+        'Inter': 'Inter'
+    };
+    
+    // Load Google Fonts dynamically
+    function loadGoogleFont(fontFamily) {
+        const link = document.getElementById('watermark-font-link');
+        if (link) {
+            link.remove();
+        }
+        
+        const newLink = document.createElement('link');
+        newLink.id = 'watermark-font-link';
+        newLink.rel = 'stylesheet';
+        newLink.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;500;600&display=swap`;
+        document.head.appendChild(newLink);
+    }
+    
+    function updateWatermarkPreview() {
+        if (!watermarkPreview || !watermarkTextPreview) return;
+        
+        const isEnabled = watermarkEnabled?.checked || false;
+        const text = watermarkText?.value || '© Your Name';
+        const fontFamily = watermarkFontFamily?.value || 'Roboto';
+        const fontSize = parseInt(watermarkFontSize?.value || 16);
+        const opacity = parseInt(watermarkOpacity?.value || 30);
+        const vertical = watermarkVertical?.value || 'bottom';
+        const horizontal = watermarkHorizontal?.value || 'right';
+        
+        if (!isEnabled) {
+            watermarkPreview.style.display = 'none';
+            return;
+        }
+        
+        watermarkPreview.style.display = 'flex';
+        
+        // Update text
+        watermarkTextPreview.textContent = text || '© Your Name';
+        
+        // Update font family
+        loadGoogleFont(fontFamily);
+        watermarkTextPreview.style.fontFamily = `'${fontFamily}', sans-serif`;
+        
+        // Update font size (will be scaled by updateWatermarkSize)
+        watermarkTextPreview.style.fontSize = fontSize + 'px';
+        
+        // Update opacity
+        watermarkTextPreview.style.opacity = opacity / 100;
+        
+        // Update position classes
+        watermarkPreview.className = 'watermark-overlay';
+        if (vertical === 'top') {
+            watermarkPreview.classList.add('top');
+        }
+        if (horizontal === 'center') {
+            watermarkPreview.classList.add('center-h');
+        } else if (horizontal === 'left') {
+            watermarkPreview.classList.add('left');
+        }
+        
+        // Update proportional size
+        updateWatermarkSize();
+    }
+    
+    function toggleWatermarkSettings() {
+        const isEnabled = watermarkEnabled?.checked || false;
+        
+        // Toggle preview section visibility
+        if (watermarkPreviewSection) {
+            if (isEnabled) {
+                watermarkPreviewSection.classList.remove('collapsed');
+            } else {
+                watermarkPreviewSection.classList.add('collapsed');
+            }
+        }
+        
+        // Toggle other settings
+        watermarkSettings.forEach(setting => {
+            setting.style.opacity = isEnabled ? '1' : '0.5';
+            const inputs = setting.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.disabled = !isEnabled;
+            });
+        });
+        
+        updateWatermarkPreview();
+    }
+    
+    // Initialize everything
+    loadUserImages().then(() => {
+        if (watermarkEnabled) {
+            toggleWatermarkSettings();
+            updateWatermarkPreview();
+            
+            // Listen for changes
+            watermarkEnabled.addEventListener('change', toggleWatermarkSettings);
+        }
+        
+        // Listen for preview updates
+        const previewInputs = [
+            watermarkText,
+            watermarkFontFamily,
+            watermarkFontSize,
+            watermarkOpacity,
+            watermarkVertical,
+            watermarkHorizontal
+        ].filter(Boolean);
+        
+        previewInputs.forEach(input => {
+            input.addEventListener('input', updateWatermarkPreview);
+            input.addEventListener('change', updateWatermarkPreview);
+        });
+        
+        // Update watermark size when window is resized
+        window.addEventListener('resize', updateWatermarkSize);
+    });
+});
+
 function showResetConfirmation() {
     console.log('showResetConfirmation called');
     

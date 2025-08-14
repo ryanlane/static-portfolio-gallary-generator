@@ -20,6 +20,173 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    transition: opacity 0.3s ease;
+}
+
+.setting-item input:disabled,
+.setting-item select:disabled,
+.setting-item textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Watermark Section Styles */
+.watermark-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.watermark-section h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.watermark-section h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.watermark-section > p {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-light);
+    font-size: 0.95rem;
+}
+
+/* Watermark Preview Styles */
+.watermark-preview-section {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.watermark-preview-section.collapsed {
+    max-height: 0;
+    padding: 0 1.5rem;
+    margin-bottom: 0;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.preview-container {
+    text-align: center;
+}
+
+.preview-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.preview-label {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.btn-small {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.preview-image {
+    position: relative;
+    display: inline-block;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 1rem;
+    max-width: 100%;
+}
+
+.preview-image img {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 400px;
+    max-height: 300px;
+    object-fit: cover;
+}
+
+.watermark-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 1rem;
+}
+
+.watermark-overlay.top {
+    align-items: flex-start;
+}
+
+.watermark-overlay.center-h {
+    justify-content: center;
+}
+
+.watermark-overlay.left {
+    justify-content: flex-start;
+}
+
+.watermark-overlay span {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    opacity: 0.3;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    max-width: calc(100% - 2rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.preview-note {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.preview-note .icon {
+    color: var(--warning-color);
+}
+
+/* Select dropdown styling */
+select.form-control {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    appearance: none;
 }
 
 /* Responsive adjustments for settings */
@@ -27,5 +194,29 @@
     .settings-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+    }
+    
+    .preview-image img {
+        max-width: 100%;
+        width: auto;
+        height: auto;
+    }
+    
+    .watermark-preview-section {
+        padding: 1rem;
+    }
+    
+    .preview-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .watermark-overlay {
+        padding: 0.5rem;
+    }
+    
+    .watermark-overlay span {
+        font-size: 12px;
+        padding: 0.2rem 0.4rem;
     }
 }
