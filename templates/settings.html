@@ -2,10 +2,76 @@
 {% block title %}Settings{% endblock %}
 {% block content %}
 <h1>Settings</h1>
-<form method="post" action="/settings/reset" onsubmit="return confirm('Are you sure you want to reset the image database? This will delete all galleries, images, and files.');">
-    <button type="submit" style="background:#c00;color:#fff;padding:1em 2em;border:none;border-radius:6px;font-size:1.1em;">Reset Image Database</button>
-</form>
+
+<div class="settings-section">
+    <h2>Database Management</h2>
+    <p>Manage your image database and galleries.</p>
+    
+    <div class="danger-zone">
+        <h3>⚠️ Danger Zone</h3>
+        <p>These actions cannot be undone. Please proceed with caution.</p>
+        
+        <button type="button" onclick="showResetConfirmation()" class="btn btn-danger">
+            <i class="icon">🗑️</i>
+            Reset Image Database
+        </button>
+    </div>
+</div>
+
 {% if message %}
-    <div class="message">{{ message }}</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast({{ message|tojson }}, 'success');
+        }
+    });
+</script>
 {% endif %}
+
+<script>
+function showResetConfirmation() {
+    console.log('showResetConfirmation called');
+    
+    // Try modal system if available
+    if (typeof window.ModalSystem !== 'undefined' && window.ModalSystem.show) {
+        console.log('Using ModalSystem');
+        window.ModalSystem.show({
+            type: 'warning',
+            title: '⚠️ Reset Image Database',
+            body: `
+                <p><strong>This action will permanently delete:</strong></p>
+                <ul>
+                    <li>All galleries and their metadata</li>
+                    <li>All uploaded images and thumbnails</li>
+                    <li>All generated static sites</li>
+                    <li>All database records</li>
+                </ul>
+                <p><strong>This action cannot be undone!</strong></p>
+                <p>Are you absolutely sure you want to continue?</p>
+            `,
+            confirmText: 'Reset Database',
+            confirmClass: 'btn-danger',
+            confirmIcon: '🗑️',
+            onConfirm: () => {
+                // Create and submit form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/settings/reset';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    } else {
+        // Simple fallback that always works
+        console.log('ModalSystem not available, using confirm');
+        if (confirm('Are you sure you want to reset the image database?\n\nThis will permanently delete:\n- All galleries and their metadata\n- All uploaded images and thumbnails\n- All generated static sites\n- All database records\n\nThis action cannot be undone!')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/settings/reset';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+</script>
 {% endblock %}

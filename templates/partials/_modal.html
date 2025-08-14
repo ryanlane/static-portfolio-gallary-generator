@@ -1,0 +1,50 @@
+{# 
+Modal Partial - Reusable modal component
+Usage: {% include "partials/_modal.html" with context %}
+
+Parameters:
+- modal_id: Unique ID for the modal
+- modal_type: 'warning', 'success', or empty for normal
+- modal_title: Title text (can include emojis)
+- modal_body: Body content (can be HTML)
+- confirm_text: Text for confirm button (default: "Confirm")
+- confirm_class: CSS class for confirm button (default: "btn-primary")
+- confirm_icon: Icon for confirm button
+- cancel_text: Text for cancel button (default: "Cancel")
+- form_action: Form action URL (optional, creates form around confirm button)
+- form_method: Form method (default: "post")
+- onclick_confirm: JavaScript function to call on confirm (alternative to form)
+- close_function: JavaScript function name for closing modal
+#}
+
+<div id="{{ modal_id }}" class="modal{{ ' ' + modal_type if modal_type else '' }}">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>{{ modal_title }}</h3>
+            <button class="modal-close" onclick="{{ close_function + '()' if close_function else 'closeModal(\'' + modal_id + '\')' }}">&times;</button>
+        </div>
+        <div class="modal-body">
+            {{ modal_body|safe }}
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="{{ close_function + '()' if close_function else 'closeModal(\'' + modal_id + '\')' }}">
+                {{ cancel_text or "Cancel" }}
+            </button>
+            
+            {% if form_action %}
+            <form method="{{ form_method or 'post' }}" action="{{ form_action }}" style="display: inline;">
+                <button type="submit" class="btn {{ confirm_class or 'btn-primary' }}">
+                    {% if confirm_icon %}<i class="icon">{{ confirm_icon }}</i>{% endif %}
+                    {{ confirm_text or "Confirm" }}
+                </button>
+            </form>
+            {% else %}
+            <button type="button" class="btn {{ confirm_class or 'btn-primary' }}" 
+                    onclick="{{ onclick_confirm }}">
+                {% if confirm_icon %}<i class="icon">{{ confirm_icon }}</i>{% endif %}
+                {{ confirm_text or "Confirm" }}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>

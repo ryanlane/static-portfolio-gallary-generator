@@ -16,12 +16,21 @@
     {% endif %}
 
     {% if request.query_params.get('success') %}
-    <div class="alert alert-success">
-        {{ request.query_params.get('success') }}
-        {% if request.query_params.get('download') %}
-        <a href="/download/{{ request.query_params.get('download') }}" class="btn btn-primary">Download Site</a>
-        {% endif %}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof showToast === 'function') {
+                showToast({{ request.query_params.get('success')|tojson }}, 'success', 5000);
+                {% if request.query_params.get('download') %}
+                // Show download button in toast or as separate notification
+                setTimeout(() => {
+                    if (typeof showToast === 'function') {
+                        showToast('Your site is ready! <a href="/download/{{ request.query_params.get('download') }}" style="color: inherit; text-decoration: underline;">Download Site</a>', 'info', 10000);
+                    }
+                }, 1000);
+                {% endif %}
+            }
+        });
+    </script>
     {% endif %}
 
     <form method="post" action="/generate/static" class="generate-form">

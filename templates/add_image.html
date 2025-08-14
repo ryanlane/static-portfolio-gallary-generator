@@ -153,7 +153,11 @@
             
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
+            if (typeof showToast === 'function') {
+                showToast('Upload failed. Please try again.', 'error');
+            } else {
+                alert('Upload failed. Please try again.');
+            }
         }
     }
     </script>

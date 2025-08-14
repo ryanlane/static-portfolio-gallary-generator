@@ -67,6 +67,20 @@ def startup():
             FOREIGN KEY(gallery_id) REFERENCES galleries(id)
         )''')
         
+        # Create generated_sites table
+        c.execute('''CREATE TABLE IF NOT EXISTS generated_sites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            site_title TEXT,
+            site_description TEXT,
+            theme TEXT,
+            filename TEXT,
+            file_size INTEGER,
+            gallery_count INTEGER,
+            image_count INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            gallery_ids TEXT
+        )''')
+        
         # Add sort_order column if it doesn't exist (for existing databases)
         try:
             c.execute('ALTER TABLE images ADD COLUMN sort_order INTEGER DEFAULT 0')
@@ -128,24 +142,43 @@ def dashboard(request: Request, skip_welcome: bool = False):
         LIMIT 8
     ''').fetchall()
     
-    # Get generated sites from filesystem (check for previous generations)
+    # Get generated sites from database
     generated_sites = []
-    download_dir = 'downloads'
-    if os.path.exists(download_dir):
-        for filename in os.listdir(download_dir):
-            if filename.endswith('.zip'):
-                file_path = os.path.join(download_dir, filename)
-                stat = os.stat(file_path)
-                generated_sites.append({
-                    'filename': filename,
-                    'name': filename.replace('.zip', '').replace('_', ' ').title(),
-                    'created': datetime.fromtimestamp(stat.st_mtime),
-                    'size': stat.st_size
-                })
-    
-    # Sort by creation time, newest first
-    generated_sites.sort(key=lambda x: x['created'], reverse=True)
-    generated_sites = generated_sites[:5]  # Keep only last 5
+    try:
+        sites = c.execute('''SELECT * FROM generated_sites 
+                            ORDER BY created_at DESC LIMIT 5''').fetchall()
+        for site in sites:
+            # Convert bytes to MB for display
+            file_size_mb = site['file_size'] / (1024 * 1024) if site['file_size'] else 0
+            generated_sites.append({
+                'id': site['id'],
+                'filename': site['filename'],
+                'name': site['site_title'] or site['filename'].replace('.zip', '').replace('_', ' ').title(),
+                'created': datetime.fromisoformat(site['created_at'].replace('Z', '+00:00')) if site['created_at'] else datetime.now(),
+                'size': file_size_mb * 1024 * 1024,  # Keep original size for compatibility
+                'galleries': site['gallery_count'],
+                'images': site['image_count'],
+                'theme': site['theme']
+            })
+    except Exception as e:
+        print(f"Error fetching generated sites from database: {e}")
+        # Fallback to filesystem method for backwards compatibility
+        download_dir = 'downloads'
+        if os.path.exists(download_dir):
+            for filename in os.listdir(download_dir):
+                if filename.endswith('.zip'):
+                    file_path = os.path.join(download_dir, filename)
+                    stat = os.stat(file_path)
+                    generated_sites.append({
+                        'filename': filename,
+                        'name': filename.replace('.zip', '').replace('_', ' ').title(),
+                        'created': datetime.fromtimestamp(stat.st_mtime),
+                        'size': stat.st_size
+                    })
+        
+        # Sort by creation time, newest first
+        generated_sites.sort(key=lambda x: x['created'], reverse=True)
+        generated_sites = generated_sites[:5]  # Keep only last 5
     
     conn.close()
     
@@ -170,6 +203,128 @@ def view_gallery(request: Request, gallery_id: int):
 @app.get('/create-gallery', response_class=HTMLResponse)
 def create_gallery_form(request: Request):
     return templates.TemplateResponse('create_gallery.html', {'request': request})
+
+@app.get('/generated-sites', response_class=HTMLResponse)
+def view_generated_sites(request: Request):
+    """View and manage all generated sites"""
+    conn = get_db()
+    
+    # Get all generated sites
+    sites = conn.execute('''SELECT * FROM generated_sites 
+                           ORDER BY created_at DESC''').fetchall()
+    
+    generated_sites = []
+    total_size = 0
+    
+    for site in sites:
+        # Check if file still exists
+        file_path = os.path.join('static', 'generated_sites', site['filename'])
+        file_exists = os.path.exists(file_path)
+        
+        # Convert bytes to MB for display
+        file_size_mb = site['file_size'] / (1024 * 1024) if site['file_size'] else 0
+        total_size += site['file_size'] if site['file_size'] else 0
+        
+        # Parse gallery IDs
+        gallery_names = []
+        if site['gallery_ids']:
+            gallery_ids = site['gallery_ids'].split(',')
+            for gid in gallery_ids:
+                gallery = conn.execute('SELECT title FROM galleries WHERE id=?', (gid.strip(),)).fetchone()
+                if gallery:
+                    gallery_names.append(gallery['title'])
+        
+        generated_sites.append({
+            'id': site['id'],
+            'title': site['site_title'],
+            'description': site['site_description'],
+            'filename': site['filename'],
+            'theme': site['theme'],
+            'size': f"{file_size_mb:.1f} MB",
+            'gallery_count': site['gallery_count'],
+            'image_count': site['image_count'],
+            'gallery_names': gallery_names,
+            'created_at': site['created_at'],
+            'file_exists': file_exists
+        })
+    
+    conn.close()
+    
+    total_size_mb = total_size / (1024 * 1024)
+    
+    return templates.TemplateResponse('generated_sites.html', {
+        'request': request,
+        'generated_sites': generated_sites,
+        'total_sites': len(generated_sites),
+        'total_size': f"{total_size_mb:.1f} MB"
+    })
+
+@app.post('/generated-sites/delete/{site_id}')
+def delete_generated_site(site_id: int):
+    """Delete a generated site and its file"""
+    try:
+        conn = get_db()
+        
+        # Get site info
+        site = conn.execute('SELECT filename FROM generated_sites WHERE id=?', (site_id,)).fetchone()
+        
+        if site:
+            # Delete file if it exists
+            file_path = os.path.join('static', 'generated_sites', site['filename'])
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            
+            # Delete from database
+            conn.execute('DELETE FROM generated_sites WHERE id=?', (site_id,))
+            conn.commit()
+        
+        conn.close()
+        
+        return RedirectResponse('/generated-sites', status_code=303)
+        
+    except Exception as e:
+        print(f"Error deleting generated site: {e}")
+        return RedirectResponse('/generated-sites?error=Failed+to+delete+site', status_code=303)
+
+@app.post('/generated-sites/cleanup')
+def cleanup_generated_sites():
+    """Clean up orphaned files and database entries"""
+    try:
+        conn = get_db()
+        
+        # Get all sites from database
+        sites = conn.execute('SELECT id, filename FROM generated_sites').fetchall()
+        
+        # Check for orphaned database entries (files that don't exist)
+        orphaned_entries = []
+        for site in sites:
+            file_path = os.path.join('static', 'generated_sites', site['filename'])
+            if not os.path.exists(file_path):
+                orphaned_entries.append(site['id'])
+        
+        # Remove orphaned database entries
+        for site_id in orphaned_entries:
+            conn.execute('DELETE FROM generated_sites WHERE id=?', (site_id,))
+        
+        # Check for orphaned files (files without database entries)
+        generated_sites_dir = os.path.join('static', 'generated_sites')
+        if os.path.exists(generated_sites_dir):
+            db_filenames = {site['filename'] for site in sites}
+            
+            for filename in os.listdir(generated_sites_dir):
+                if filename.endswith('.zip') and filename not in db_filenames:
+                    file_path = os.path.join(generated_sites_dir, filename)
+                    os.remove(file_path)
+        
+        conn.commit()
+        conn.close()
+        
+        message = f"Cleanup complete. Removed {len(orphaned_entries)} orphaned database entries."
+        return RedirectResponse(f'/generated-sites?message={message}', status_code=303)
+        
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
+        return RedirectResponse('/generated-sites?error=Cleanup+failed', status_code=303)
 
 @app.get('/welcome', response_class=HTMLResponse)
 def welcome_page(request: Request):
@@ -717,6 +872,23 @@ def generate_static_site(
             # Get file size for display
             file_size = os.path.getsize(zip_path)
             file_size_mb = file_size / (1024 * 1024)
+            
+            # Save generated site to database
+            try:
+                conn = get_db()
+                c = conn.cursor()
+                gallery_ids_json = ','.join(gallery_ids)
+                total_images = sum(len(g["images"]) for g in galleries)
+                c.execute('''INSERT INTO generated_sites 
+                            (site_title, site_description, theme, filename, file_size, 
+                             gallery_count, image_count, gallery_ids) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                         (site_title, site_description, theme, zip_filename, file_size,
+                          len(galleries), total_images, gallery_ids_json))
+                conn.commit()
+                conn.close()
+            except Exception as db_error:
+                print(f"Error saving generated site to database: {db_error}")
             
             # Store generation info in session/query params for results page
             return RedirectResponse(f'/generate/results?zip={zip_filename}&title={site_title}&desc={site_description}&theme={theme}&galleries={len(galleries)}&images={sum(len(g["images"]) for g in galleries)}&size={file_size_mb:.1f}', status_code=303)

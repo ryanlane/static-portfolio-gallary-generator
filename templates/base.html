@@ -32,5 +32,17 @@
             navLinks.classList.toggle('show');
         }
     </script>
+    
+    <!-- Modal System - Load early -->
+    <script src="/static/js/modal-system.js"></script>
+    
+    <!-- Debug script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Base template: DOM loaded');
+            console.log('Base template: ModalSystem available:', typeof window.ModalSystem);
+            console.log('Base template: showDeleteDialog available:', typeof window.showDeleteDialog);
+        });
+    </script>
 </body>
 </html>

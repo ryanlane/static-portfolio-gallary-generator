@@ -15,15 +15,23 @@
     </div>
 
     {% if request.query_params.get('message') %}
-    <div class="alert alert-success">
-        {{ request.query_params.get('message') }}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof showToast === 'function') {
+                showToast({{ request.query_params.get('message')|tojson }}, 'success');
+            }
+        });
+    </script>
     {% endif %}
 
     {% if request.query_params.get('error') %}
-    <div class="alert alert-error">
-        {{ request.query_params.get('error') }}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof showToast === 'function') {
+                showToast({{ request.query_params.get('error')|tojson }}, 'error');
+            }
+        });
+    </script>
     {% endif %}
 
     {% if galleries %}
@@ -88,7 +96,7 @@
                         <span class="icon">✏️</span>
                         Edit
                     </a>
-                    <button onclick="confirmDelete({{ gallery.id }}, '{{ gallery.title or 'Gallery ' + gallery.id|string }}')" class="btn btn-danger btn-small">
+                    <button onclick="deleteGallery({{ gallery.id }}, '{{ gallery.title or 'Gallery ' + gallery.id|string }}')" class="btn btn-danger btn-small">
                         <span class="icon">🗑️</span>
                         Delete
                     </button>
@@ -110,54 +118,16 @@
     {% endif %}
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Delete Gallery</h3>
-            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Are you sure you want to delete "<span id="deleteGalleryName"></span>"?</p>
-            <p class="warning">This will permanently delete the gallery and all its images. This action cannot be undone.</p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-            <form id="deleteForm" method="post" style="display: inline;">
-                <button type="submit" class="btn btn-danger">
-                    <span class="icon">🗑️</span>
-                    Delete Gallery
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
 <script>
-function confirmDelete(galleryId, galleryName) {
-    document.getElementById('deleteGalleryName').textContent = galleryName;
-    document.getElementById('deleteForm').action = `/gallery/${galleryId}/delete`;
-    document.getElementById('deleteModal').style.display = 'block';
-    document.body.style.overflow = 'hidden';
+function deleteGallery(galleryId, galleryName) {
+    showDeleteDialog(galleryName, () => {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/gallery/${galleryId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    });
 }
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-// Close modal when clicking outside
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeDeleteModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDeleteModal();
-    }
-});
 </script>
 {% endblock %}

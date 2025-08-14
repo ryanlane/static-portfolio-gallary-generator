@@ -50,7 +50,7 @@
                     <strong>Delete this gallery</strong>
                     <p>Once you delete a gallery, there is no going back. This will permanently delete the gallery and all its images.</p>
                 </div>
-                <button onclick="confirmDelete()" class="btn btn-danger">
+                <button onclick="deleteGalleryWithConfirmation()" class="btn btn-danger">
                     <span class="icon">🗑️</span>
                     Delete Gallery
                 </button>
@@ -58,77 +58,45 @@
         </div>
     </div>
 </div>
-
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Delete Gallery</h3>
-            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Are you sure you want to delete "<strong>{{ gallery.title or "Gallery " + gallery.id|string }}</strong>"?</p>
-            <p class="warning">This will permanently delete the gallery and all its images. This action cannot be undone.</p>
-            <div class="confirmation-input">
-                <label for="confirmText">Type the gallery name to confirm:</label>
-                <input type="text" id="confirmText" placeholder="{{ gallery.title or 'Gallery ' + gallery.id|string }}" 
-                       onkeyup="checkConfirmation()">
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-            <form method="post" action="/gallery/{{ gallery.id }}/delete" style="display: inline;">
-                <button type="submit" id="deleteButton" class="btn btn-danger" disabled>
-                    <span class="icon">🗑️</span>
-                    Delete Gallery
-                </button>
-            </form>
-        </div>
-    </div>
-</div>
-
-
 
 <script>
-function confirmDelete() {
-    document.getElementById('deleteModal').style.display = 'block';
-    document.body.style.overflow = 'hidden';
-    document.getElementById('confirmText').value = '';
-    document.getElementById('deleteButton').disabled = true;
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').style.display = 'none';
-    document.body.style.overflow = 'auto';
-}
-
-function checkConfirmation() {
-    const input = document.getElementById('confirmText');
-    const button = document.getElementById('deleteButton');
-    const expectedText = '{{ gallery.title or "Gallery " + gallery.id|string }}';
+function deleteGalleryWithConfirmation() {
+    const galleryName = '{{ gallery.title or "Gallery " + gallery.id|string }}';
     
-    if (input.value === expectedText) {
-        button.disabled = false;
-        button.classList.remove('disabled');
+    // Try modal system if available
+    if (typeof window.ModalSystem !== 'undefined' && window.ModalSystem.show) {
+        window.ModalSystem.show({
+            type: 'warning',
+            title: '⚠️ Delete Gallery',
+            body: `
+                <p>Are you sure you want to delete "<strong>${galleryName}</strong>"?</p>
+                <p>This will permanently delete the gallery and all its images.</p>
+                <p><strong>This action cannot be undone.</strong></p>
+            `,
+            confirmText: 'Delete Gallery',
+            confirmClass: 'btn-danger',
+            confirmIcon: '🗑️',
+            onConfirm: () => {
+                // Create and submit form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/gallery/{{ gallery.id }}/delete';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
     } else {
-        button.disabled = true;
-        button.classList.add('disabled');
+        // Simple fallback that always works
+        const galleryName = '{{ gallery.title or "Gallery " + gallery.id|string }}';
+        if (confirm(`Are you sure you want to delete "${galleryName}"?\n\nThis will permanently delete the gallery and all its images. This action cannot be undone.`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/gallery/{{ gallery.id }}/delete';
+            document.body.appendChild(form);
+            form.submit();
+        }
     }
 }
-
-// Close modal when clicking outside
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeDeleteModal();
-    }
-});
-
-// Close modal with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDeleteModal();
-    }
-});
 
 // Auto-focus title field
 document.addEventListener('DOMContentLoaded', function() {

@@ -23,9 +23,13 @@
     </div>
 
     {% if request.query_params.get('message') %}
-    <div class="alert alert-success">
-        {{ request.query_params.get('message') }}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof showToast === 'function') {
+                showToast({{ request.query_params.get('message')|tojson }}, 'success');
+            }
+        });
+    </script>
     {% endif %}
 
     {% if images %}
@@ -54,7 +58,31 @@
     </div>
 </div>
 
+<script>
+// Image deletion using modal system
+function deleteImage(imageId) {
+    showDeleteDialog('this image', () => {
+        fetch(`/image/${imageId}/delete`, {
+            method: 'POST',
+            headers: { 'accept': 'application/json' }
+        }).then(resp => resp.json()).then(data => {
+            if (data.success) {
+                document.getElementById(`img-${imageId}`).remove();
+            } else {
+                showSuccessDialog('Failed to delete image', null, {
+                    type: 'warning',
+                    title: '⚠️ Error'
+                });
+            }
+        }).catch(() => {
+            window.location.reload();
+        });
+    });
+}
 
+// Override the gallery.js delete function
+window.showDeleteImageModal = deleteImage;
+</script>
 
 <script src="/static/gallery.js"></script>
 {% endblock %}

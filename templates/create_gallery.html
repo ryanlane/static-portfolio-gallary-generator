@@ -124,7 +124,11 @@ document.querySelector('.create-form').addEventListener('submit', function(e) {
     
     if (!title) {
         e.preventDefault();
-        alert('Please enter a gallery title');
+        if (typeof showToast === 'function') {
+            showToast('Please enter a gallery title', 'warning');
+        } else {
+            alert('Please enter a gallery title');
+        }
         document.getElementById('title').focus();
         return;
     }

@@ -181,7 +181,11 @@ document.addEventListener('DOMContentLoaded', function() {
           if (descDisplay) descDisplay.style.display = description ? 'block' : 'none';
           document.querySelector(`.edit-image[data-id="${imageId}"]`).textContent = '✏️';
         } else {
-          alert('Failed to save changes');
+          if (typeof showToast === 'function') {
+            showToast('Failed to save changes', 'error');
+          } else {
+            alert('Failed to save changes');
+          }
         }
       });
     }
@@ -205,19 +209,25 @@ document.addEventListener('DOMContentLoaded', function() {
       const btn = e.target;
       const imageId = btn.getAttribute('data-id');
       
-      if (confirm('Are you sure you want to delete this image?')) {
-        fetch(`/image/${imageId}/delete`, {
-          method: 'POST',
-          headers: { 'accept': 'application/json' }
-        }).then(resp => resp.json()).then(data => {
-          if (data.success) {
-            document.getElementById(`img-${imageId}`).remove();
-          } else {
-            alert('Failed to delete image');
-          }
-        }).catch(() => {
-          window.location.reload();
-        });
+      // Use the modal system function
+      if (window.showDeleteImageModal) {
+        window.showDeleteImageModal(imageId);
+      } else {
+        // Fallback to confirm dialog
+        if (confirm('Are you sure you want to delete this image?')) {
+          fetch(`/image/${imageId}/delete`, {
+            method: 'POST',
+            headers: { 'accept': 'application/json' }
+          }).then(resp => resp.json()).then(data => {
+            if (data.success) {
+              document.getElementById(`img-${imageId}`).remove();
+            } else {
+              alert('Failed to delete image');
+            }
+          }).catch(() => {
+            window.location.reload();
+          });
+        }
       }
     }
     
@@ -259,7 +269,11 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.title = 'Set as featured';
           }
         }).catch(() => {
-          alert('Error removing featured image');
+          if (typeof showToast === 'function') {
+            showToast('Error removing featured image', 'error');
+          } else {
+            alert('Error removing featured image');
+          }
         });
       } else {
         // Set this image as featured
@@ -286,12 +300,64 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.textContent = '⭐';
             btn.title = 'Remove as featured';
           } else {
-            alert('Failed to set featured image');
+            if (typeof showToast === 'function') {
+              showToast('Failed to set featured image', 'error');
+            } else {
+              alert('Failed to set featured image');
+            }
           }
         }).catch(() => {
-          alert('Error setting featured image');
+          if (typeof showToast === 'function') {
+            showToast('Error setting featured image', 'error');
+          } else {
+            alert('Error setting featured image');
+          }
         });
       }
     }
   });
 });
+
+// Define the showDeleteImageModal function
+window.showDeleteImageModal = function(imageId) {
+  if (typeof showDeleteDialog === 'function') {
+    showDeleteDialog('this image', () => {
+      // Delete the image
+      fetch(`/image/${imageId}/delete`, {
+        method: 'POST',
+        headers: { 'accept': 'application/json' }
+      }).then(resp => resp.json()).then(data => {
+        if (data.success) {
+          document.getElementById(`img-${imageId}`).remove();
+          if (typeof showToast === 'function') {
+            showToast('Image deleted successfully', 'success');
+          }
+        } else {
+          if (typeof showToast === 'function') {
+            showToast('Failed to delete image', 'error');
+          } else {
+            alert('Failed to delete image');
+          }
+        }
+      }).catch(() => {
+        window.location.reload();
+      });
+    });
+  } else {
+    // Fallback if modal system not available
+    if (confirm('Are you sure you want to delete this image?')) {
+      fetch(`/image/${imageId}/delete`, {
+        method: 'POST',
+        headers: { 'accept': 'application/json' }
+      }).then(resp => resp.json()).then(data => {
+        if (data.success) {
+          document.getElementById(`img-${imageId}`).remove();
+        } else {
+          alert('Failed to delete image');
+        }
+      }).catch(() => {
+        window.location.reload();
+      });
+    }
+  }
+};

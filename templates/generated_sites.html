@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Generated Sites{% endblock %}
+
+{% block content %}
+<div class="sites-header">
+    <div class="sites-title">
+        <h1>🌐 Generated Sites</h1>
+        <p>Manage all your generated static portfolio sites</p>
+    </div>
+    
+    <div class="sites-stats">
+        <div class="stat-item">
+            <span class="stat-number">{{ total_sites }}</span>
+            <span class="stat-label">Total Sites</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ total_size }}</span>
+            <span class="stat-label">Storage Used</span>
+        </div>
+    </div>
+</div>
+
+<div class="sites-actions">
+    <a href="/generate" class="btn btn-primary">
+        <i class="icon">➕</i>
+        Generate New Site
+    </a>
+    
+    <form method="post" action="/generated-sites/cleanup" style="display: inline;">
+        <button type="button" class="btn btn-secondary" onclick="showCleanupConfirmation()">
+            <i class="icon">🧹</i>
+            Cleanup Files
+        </button>
+    </form>
+</div>
+
+{% if request.query_params.get('message') %}
+{% if request.query_params.get('message') %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof showToast === 'function') {
+            showToast({{ request.query_params.get('message')|tojson }}, 'success');
+        }
+    });
+</script>
+{% endif %}
+{% endif %}
+
+{% if request.query_params.get('error') %}
+<div class="alert alert-error">{{ request.query_params.get('error') }}</div>
+{% endif %}
+
+{% if generated_sites %}
+<div class="sites-grid">
+    {% for site in generated_sites %}
+    <div class="site-card {{ 'missing-file' if not site.file_exists else '' }}">
+        <!-- Title -->
+        <div class="site-header">
+            <h3>{{ site.title }}</h3>
+            {% if not site.file_exists %}
+            <span class="status-badge error">File Missing</span>
+            {% endif %}
+        </div>
+        
+        <!-- Description -->
+        {% if site.description %}
+        <p class="site-description">{{ site.description }}</p>
+        {% endif %}
+        
+        <!-- Site Details -->
+        <div class="site-details">
+            <div class="detail-row">
+                <span class="label">Theme:</span>
+                <span class="value">{{ site.theme.title() }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Galleries:</span>
+                <span class="value">{{ site.gallery_count }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Images:</span>
+                <span class="value">{{ site.image_count }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Size:</span>
+                <span class="value">{{ site.size }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Created:</span>
+                <span class="value">{{ site.created_at.split('T')[0] if 'T' in site.created_at else site.created_at }}</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="site-actions">
+            {% if site.file_exists %}
+            <a href="/download/{{ site.filename }}" class="btn btn-sm btn-primary">
+                <i class="icon">⬇️</i>
+                Download
+            </a>
+            {% endif %}
+            <button type="button" class="btn btn-sm btn-danger" onclick="deleteSite('{{ site.id }}', '{{ site.title }}')">
+                <i class="icon">🗑️</i>
+                Delete
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📦</div>
+    <h3>No Generated Sites</h3>
+    <p>You haven't generated any static sites yet. Create some galleries and generate your first portfolio site!</p>
+    <a href="/generate" class="btn btn-primary">
+        <i class="icon">➕</i>
+        Generate Your First Site
+    </a>
+</div>
+{% endif %}
+
+<script>
+function deleteSite(siteId, siteName) {
+    console.log('deleteSite called with:', siteId, siteName);
+    
+    // Try modal system if available
+    if (typeof showDeleteDialog === 'function') {
+        console.log('Using showDeleteDialog');
+        showDeleteDialog(siteName, () => {
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/generated-sites/delete/${siteId}`;
+            
+            // Add success handling
+            form.addEventListener('submit', function() {
+                // Show success toast after a short delay to ensure deletion completes
+                setTimeout(() => {
+                    if (typeof showToast === 'function') {
+                        showToast(`"${siteName}" deleted successfully`, 'success');
+                    }
+                }, 500);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    } else {
+        // Simple fallback that always works
+        console.log('Modal system not available, using confirm');
+        if (confirm(`Are you sure you want to delete "${siteName}"?\n\nThis will:\n- Remove the site file from storage\n- Delete the database record\n\nThis action cannot be undone.`)) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/generated-sites/delete/${siteId}`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
+function showCleanupConfirmation() {
+    console.log('showCleanupConfirmation called');
+    
+    // Try modal system if available
+    if (typeof window.ModalSystem !== 'undefined' && window.ModalSystem.show) {
+        console.log('Using ModalSystem');
+        window.ModalSystem.show({
+            type: 'warning',
+            title: '⚠️ Cleanup Files',
+            body: `
+                <p>This will remove orphaned files and database entries.</p>
+                <p><strong>Orphaned files:</strong> Zip files without database records</p>
+                <p><strong>Orphaned database entries:</strong> Records without actual files</p>
+                <p>This action cannot be undone. Continue?</p>
+            `,
+            confirmText: 'Cleanup Files',
+            confirmClass: 'btn-danger',
+            confirmIcon: '🧹',
+            onConfirm: () => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/generated-sites/cleanup';
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    } else {
+        // Simple fallback that always works
+        console.log('ModalSystem not available, using confirm');
+        if (confirm('This will remove orphaned files and database entries.\n\nOrphaned files: Zip files without database records\nOrphaned database entries: Records without actual files\n\nThis action cannot be undone. Continue?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/generated-sites/cleanup';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+
+// Test function to verify modal system
+function testModal() {
+    console.log('Testing modal system...');
+    if (typeof ModalSystem !== 'undefined') {
+        ModalSystem.show({
+            title: 'Test Modal',
+            body: '<p>Modal system is working!</p>',
+            confirmText: 'OK',
+            showCancel: false
+        });
+    } else {
+        alert('Modal system not loaded');
+    }
+}
+
+// Check when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking modal system...');
+    console.log('ModalSystem:', typeof ModalSystem);
+    console.log('showDeleteDialog:', typeof showDeleteDialog);
+    
+    // Add test button temporarily
+    const testBtn = document.createElement('button');
+    testBtn.textContent = 'Test Modal';
+    testBtn.onclick = testModal;
+    testBtn.style.position = 'fixed';
+    testBtn.style.top = '10px';
+    testBtn.style.right = '10px';
+    testBtn.style.zIndex = '9999';
+    testBtn.style.background = '#007bff';
+    testBtn.style.color = 'white';
+    testBtn.style.border = 'none';
+    testBtn.style.padding = '10px';
+    testBtn.style.borderRadius = '5px';
+    document.body.appendChild(testBtn);
+});
+</script>
+
+{% endblock %}
